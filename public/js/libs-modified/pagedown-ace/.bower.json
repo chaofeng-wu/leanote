@@ -1,0 +1,14 @@
+{
+  "name": "pagedown-ace",
+  "homepage": "https://github.com/benweet/pagedown-ace",
+  "_release": "c9d41937e1",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "c9d41937e1e3b4e46f823856a47f9eb22a8108e1"
+  },
+  "_source": "https://github.com/benweet/pagedown-ace.git",
+  "_target": "*",
+  "_originalSource": "benweet/pagedown-ace",
+  "_direct": true
+}

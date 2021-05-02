@@ -25,6 +25,14 @@
     "requirejs": "^2.3.6",
     "ObjectId.js": "justaprogrammer/ObjectId.js",
     "jquery.cookie": "carhartl/jquery-cookie#^1.4.1",
-    "jquery-qrcode": "jeromeetienne/jquery-qrcode"
+    "jquery-qrcode": "jeromeetienne/jquery-qrcode",
+    "underscore": "jashkenas/underscore#1.5.1",
+    "crel": "KoryNunn/crel#d0b56e0",
+    "xregexp": "slevithan/xregexp#3.0.0",
+    "pagedown-extra": "jmcmanus/pagedown-extra",
+    "waitForImages": "alexanderdickson/waitForImages#1.4.2",
+    "flowchart": "adrai/flowchart.js#1.3.3",
+    "raphael": "2.1.1",
+    "js-sequence-diagrams": "bramp/js-sequence-diagrams#1.0.4"
   }
 }
