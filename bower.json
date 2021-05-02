@@ -23,6 +23,8 @@
     "code-prettify": "*",
     "html5sortable": "farhadi/html5sortable",
     "requirejs": "^2.3.6",
-    "ObjectId.js": "justaprogrammer/ObjectId.js"
+    "ObjectId.js": "justaprogrammer/ObjectId.js",
+    "jquery.cookie": "carhartl/jquery-cookie#^1.4.1",
+    "jquery-qrcode": "jeromeetienne/jquery-qrcode"
   }
 }
