@@ -10,16 +10,16 @@
 <meta name="description" content="Leanote, 蚂蚁笔记, {{msg $ "moto"}}">
 <title>Leanote, {{msg $ "moto"}}</title>
 
-<link href="/css/bootstrap-min.css" rel="stylesheet" />
+<link href="/js/libs-modified/boostrap/bootstrap-min.css" rel="stylesheet" />
 <!-- 先加载, 没有样式, 宽度不定 -->
 <link rel="stylesheet" href="/css/tinymce/skin.min.css" rel="stylesheet"/>
 <!-- leanote css -->
-<link href="/css/font-awesome-4.2.0/css/font-awesome-min.css" rel="stylesheet" />
-<link href="/css/zTreeStyle/zTreeStyle-min.css" rel="stylesheet" />
+<link href="/js/libs/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+<link href="/js/libs-modified/ztree/zTreeStyle/zTreeStyle-min.css" rel="stylesheet" />
 <!-- mdeditor -->
-<link href="/public/md/themes/default.css" rel="stylesheet" />
+<link href="/js/md/themes/default.css" rel="stylesheet" />
 <!-- context-menu -->
-<link rel="stylesheet" href="/js/contextmenu/css/contextmenu-min.css?id=1" type="text/css" />
+<link rel="stylesheet" href="/js/libs-modified/contextmenu/css/contextmenu-min.css?id=1" type="text/css" />
 
 <script>
 var hash = location.hash;
@@ -891,18 +891,18 @@ var GlobalConfigs = {{.globalConfigs|jsonJs}};
 <!-- pro_dep_js -->
 
 <!-- dev -->
-<script src="/js/jquery-1.9.0.min.js"></script>
-<script src="/js/jquery.ztree.all-3.5.js"></script>
-<script src="/js/object_id.js"></script>
+<script src="/js/libs/jquery/jquery.min.js"></script>
+<script src="/js/libs-modified/ztree/jquery.ztree.all-3.5.js"></script>
+<script src="/js/libs/ObjectId.js/src/main/javascript/Objectid.js"></script>
 <!-- /dev -->
 
-<script src="/tinymce/tinymce.js"></script>
+<script src="/js/libs-modified/tinymce/tinymce.js"></script>
 
-<script src="/public/libs/ace/ace.js"></script>
+<script src="/js/libs-modified/ace/ace.js"></script>
 
 <!-- dev -->
-<script src="/js/jQuery-slimScroll-1.3.0/jquery.slimscroll.js"></script>
-<script src="/js/contextmenu/jquery.contextmenu.js"></script>
+<script src="/js/libs-modified/jQuery-slimScroll/jquery.slimscroll.js"></script>
+<script src="/js/libs-modified/contextmenu/jquery.contextmenu.js"></script>
 <script src="/js/common.js"></script>
 <script src="/js/bootstrap-min.js"></script>
 <script src="/js/app/note.js"></script>
@@ -924,8 +924,8 @@ window.require = {
 <!-- pro_markdown_js -->
 
 <!-- dev -->
-<script src="/js/require.js"></script>
-<script src="/public/md/main-v2.min.js"></script>
+<script src="/js/libs/requirejs/require.js"></script>
+<script src="/js/md/main-v2.min.js"></script>
 <!-- /dev -->
 
 <script src="/public/js/plugins/main.js"></script>

@@ -18,6 +18,11 @@
     "ace": "^1.4.12",
     "jquery": "1.9.0",
     "font-awesome": "Font-Awesome#4.2.0",
-    "bootstrap": "3.2.0"
+    "bootstrap": "3.2.0",
+    "jquery_pagination": "gbirke/jquery_pagination#^2.2.1",
+    "code-prettify": "*",
+    "html5sortable": "farhadi/html5sortable",
+    "requirejs": "^2.3.6",
+    "ObjectId.js": "justaprogrammer/ObjectId.js"
   }
 }

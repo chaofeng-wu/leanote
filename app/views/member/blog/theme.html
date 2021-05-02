@@ -224,13 +224,13 @@ $(".btn-public").click(function() {
 });
 </script>
 
-<script src="/js/require.js"></script>
+<script src="/js/libs/requirejs/require.js"></script>
 <script>
 // 导入主题
 require.config({
 	baseUrl: '/public',
     paths: {
-    	'import_theme': 'member/js/import_theme',
+    	'import_theme': 'js/member/js/import_theme',
     	'fileupload': 'js/plugins/libs-min/fileupload',
     },
 });
