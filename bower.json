@@ -1,0 +1,23 @@
+{
+  "name": "leanote-front-end-builder",
+  "description": "",
+  "main": "",
+  "authors": [
+    "life(http://life.leanote.com)"
+  ],
+  "license": "GPL v2",
+  "homepage": "https://github.com/chaofeng-wu/leanote",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "ace": "^1.4.12",
+    "jquery": "1.9.0",
+    "font-awesome": "Font-Awesome#4.2.0",
+    "bootstrap": "3.2.0"
+  }
+}

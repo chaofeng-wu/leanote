@@ -27,7 +27,7 @@ var fixedStyle = "blog_left_fixed"
 
 // admin用户的主题基路径
 func (this *ThemeService) getDefaultThemeBasePath() string {
-	return revel.BasePath + "/public/blog/themes"
+	return revel.BasePath + "/public/js/blog/themes"
 }
 
 // 默认主题路径
@@ -44,11 +44,11 @@ func (this *ThemeService) getDefaultThemePath(style string) string {
 // blogService用
 func (this *ThemeService) GetDefaultThemePath(style string) string {
 	if style == elegantStyle {
-		return "public/blog/themes/elegant"
+		return "public/js/blog/themes/elegant"
 	} else if style == fixedStyle {
-		return "public/blog/themes/nav_fixed"
+		return "public/js/blog/themes/nav_fixed"
 	} else {
-		return "public/blog/themes/default"
+		return "public/js/blog/themes/default"
 	}
 }
 
@@ -58,7 +58,7 @@ func (this *ThemeService) getDefaultTheme(style string) info.Theme {
 	if style == elegantStyle {
 		return info.Theme{
 			IsDefault: true,
-			Path:      "public/blog/themes/elegant",
+			Path:      "public/js/blog/themes/elegant",
 			Name:      "leanote elegant",
 			Author:    "leanote",
 			AuthorUrl: "http://leanote.com",
@@ -67,7 +67,7 @@ func (this *ThemeService) getDefaultTheme(style string) info.Theme {
 	} else if style == fixedStyle {
 		return info.Theme{
 			IsDefault: true,
-			Path:      "public/blog/themes/nav_fixed",
+			Path:      "public/js/blog/themes/nav_fixed",
 			Name:      "leanote nav fixed",
 			Author:    "leanote",
 			AuthorUrl: "http://leanote.com",
@@ -76,7 +76,7 @@ func (this *ThemeService) getDefaultTheme(style string) info.Theme {
 	} else { // blog default
 		return info.Theme{
 			IsDefault: true,
-			Path:      "public/blog/themes/default",
+			Path:      "public/js/blog/themes/default",
 			Name:      "leanote default",
 			Author:    "leanote",
 			AuthorUrl: "http://leanote.com",
