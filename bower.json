@@ -33,6 +33,7 @@
     "waitForImages": "alexanderdickson/waitForImages#1.4.2",
     "flowchart": "adrai/flowchart.js#1.3.3",
     "raphael": "2.1.1",
-    "js-sequence-diagrams": "bramp/js-sequence-diagrams#1.0.4"
+    "js-sequence-diagrams": "bramp/js-sequence-diagrams#1.0.4",
+    "mathjax": "mathjax/mathjax#2.0"
   }
 }
