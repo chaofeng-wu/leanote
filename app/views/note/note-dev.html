@@ -20,6 +20,8 @@
 <link href="/js/md/themes/default.css" rel="stylesheet" />
 <!-- context-menu -->
 <link rel="stylesheet" href="/js/libs-modified/contextmenu/css/contextmenu-min.css?id=1" type="text/css" />
+<!-- jspanel -->
+<link href="/js/libs/jspanel4x/dist/jspanel.min.css" rel="stylesheet" />
 
 <script>
 var hash = location.hash;
@@ -622,6 +624,9 @@ function log(o) {
 						            	<div class="wmd-button-bar-inner clearfix">
 							                <ul class="nav left-buttons">
 							                    <li class="wmd-button-group1 btn-group"></li>
+												<li id="minmap">
+													<i class="fa fa-lightbulb-o"></i>
+												</li>
 							                </ul>
 							                <ul class="nav left-buttons">
 							                    <li class="wmd-button-group2 btn-group"></li>
@@ -894,6 +899,14 @@ var GlobalConfigs = {{.globalConfigs|jsonJs}};
 <script src="/js/libs/jquery/jquery.min.js"></script>
 <script src="/js/libs-modified/ztree/jquery.ztree.all-3.5.js"></script>
 <script src="/js/libs/ObjectId.js/src/main/javascript/Objectid.js"></script>
+<!-- loading jsPanel javascript -->
+<script src="/js/libs/jspanel4x/dist/jspanel.min.js"></script>
+<!-- optionally load jsPanel extensions -->
+<script src="/js/libs/jspanel4x/dist/extensions/modal/jspanel.modal.min.js"></script>
+<script src="/js/libs/jspanel4x/dist/extensions/tooltip/jspanel.tooltip.min.js"></script>
+<script src="/js/libs/jspanel4x/dist/extensions/hint/jspanel.hint.min.js"></script>
+<script src="/js/libs/jspanel4x/dist/extensions/dock/jspanel.dock.min.js"></script>
+<script src="/js/libs/jspanel4x/dist/extensions/contextmenu/jspanel.contextmenu.min.js"></script>
 <!-- /dev -->
 
 <script src="/js/libs-modified/tinymce/tinymce.js"></script>
@@ -910,6 +923,7 @@ var GlobalConfigs = {{.globalConfigs|jsonJs}};
 <script src="/js/app/notebook.js"></script>
 <script src="/js/app/share.js"></script>
 <script src="/js/app/page.js?t=1"></script>
+<script src="/js/app/markdownToMindmap.js"></script>
 <!-- /dev -->
 
 <!-- pro_app_js -->

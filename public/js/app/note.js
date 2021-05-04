@@ -310,6 +310,39 @@ Note.curHasChanged = function(force, isRefreshOrCtrls) {
 	return false;
 };
 
+Note.getCurEditorContent = function(){
+	var cacheNote = Note.getCurNote(); 
+	var contents = getEditorContent(cacheNote.IsMarkdown);
+	return contents[0];
+}
+
+// 保存mindmap中的更改
+Note.saveChangeInMindmap = function(markdown){
+	var cacheNote = Note.getCurNote(); 
+	if (!cacheNote) {
+		return;
+	}
+
+	if (cacheNote.Content === markdown) {
+		return;
+	}
+
+	cacheNote.Content = markdown;
+	// cacheNote.preview = Converter.makeHtml(markdown);
+	setEditorContent(cacheNote.Content, cacheNote.IsMarkdown, cacheNote.Preview);
+
+	var hasChanged = {
+		hasChanged: true, // 总的是否有改变
+		IsNew: cacheNote.IsNew, // 是否是新添加的
+		IsMarkdown: cacheNote.IsMarkdown, // 是否是markdown笔记
+		FromUserId: cacheNote.FromUserId, // 是否是共享新建的
+		NoteId: cacheNote.NoteId,
+		NotebookId: cacheNote.NotebookId,
+		Content: markdown
+	};
+	Note.saveChange(hasChanged);
+}
+
 // 由content生成desc
 // 换行不要替换
 Note.genDesc = function(content) {
@@ -398,7 +431,6 @@ Note.getImgSrc = function(content) {
 Note.saveInProcess = {}; // noteId => bool, true表示该note正在保存到服务器, 服务器未响应
 Note.savePool = {}; // 保存池, 以后的保存先放在pool中, id => note
 Note.curChangedSaveIt = function(force, callback, isRefreshOrCtrls) {
-	var me = this;
 	// 如果当前没有笔记, 不保存
 	// 或者是共享的只读笔记
 	if(!Note.curNoteId || Note.isReadOnly) {
@@ -415,48 +447,8 @@ Note.curChangedSaveIt = function(force, callback, isRefreshOrCtrls) {
 	}
 	
 	if(hasChanged && hasChanged.hasChanged) {
-		log('需要保存...');
-		// 把已改变的渲染到左边 item-list
-		Note.renderChangedNote(hasChanged);
-		delete hasChanged.hasChanged;
-		
-		// 表示有未完成的保存
-		/*
-		if(me.saveInProcess[hasChanged.NoteId]) {
-			log("in process");
-			me.savePool[hasChanged.NoteId] = hasChanged;
-			me.startUpdatePoolNoteInterval();
-			return;
-		}
-		*/
-		
-		// 保存之
-		showMsg(getMsg("saving"));
-		
-		me.saveInProcess[hasChanged.NoteId] = true;
-		
-		ajaxPost("/note/updateNoteOrContent", hasChanged, function(ret) {
-			me.saveInProcess[hasChanged.NoteId] = false;
-			if(hasChanged.IsNew) {
-				// 缓存之, 后台得到其它信息
-				ret.IsNew = false;
-				Note.setNoteCache(ret, false);
 
-				// 新建笔记也要change history
-				Pjax.changeNote(ret);
-			}
-			callback && callback();
-			showMsg(getMsg("saveSuccess"), 1000);
-		});
-		
-		if(hasChanged['Tags'] != undefined && typeof hasChanged['Tags'] == 'string') {
-			hasChanged['Tags'] = hasChanged['Tags'].split(',');
-		}
-		// 先缓存, 把markdown的preview也缓存起来
-		Note.setNoteCache(hasChanged, false);
-		// 设置更新时间
-		Note.setNoteCache({"NoteId": hasChanged.NoteId, "UpdatedTime": (new Date()).format("yyyy-MM-ddThh:mm:ss.S")}, false);
-		Note.clearCacheByNotebookId(hasChanged.NotebookId);
+		Note.saveChange(hasChanged, callback);
 
 		return hasChanged;
 	}
@@ -466,6 +458,52 @@ Note.curChangedSaveIt = function(force, callback, isRefreshOrCtrls) {
 
 	return false;
 };
+
+Note.saveChange = function(hasChanged, callback){
+	var me = this;
+	log('需要保存...');
+	// 把已改变的渲染到左边 item-list
+	Note.renderChangedNote(hasChanged);
+	delete hasChanged.hasChanged;
+	
+	// 表示有未完成的保存
+	/*
+	if(me.saveInProcess[hasChanged.NoteId]) {
+		log("in process");
+		me.savePool[hasChanged.NoteId] = hasChanged;
+		me.startUpdatePoolNoteInterval();
+		return;
+	}
+	*/
+	
+	// 保存之
+	showMsg(getMsg("saving"));
+	
+	me.saveInProcess[hasChanged.NoteId] = true;
+	
+	ajaxPost("/note/updateNoteOrContent", hasChanged, function(ret) {
+		me.saveInProcess[hasChanged.NoteId] = false;
+		if(hasChanged.IsNew) {
+			// 缓存之, 后台得到其它信息
+			ret.IsNew = false;
+			Note.setNoteCache(ret, false);
+
+			// 新建笔记也要change history
+			Pjax.changeNote(ret);
+		}
+		callback && callback();
+		showMsg(getMsg("saveSuccess"), 1000);
+	});
+	
+	if(hasChanged['Tags'] != undefined && typeof hasChanged['Tags'] == 'string') {
+		hasChanged['Tags'] = hasChanged['Tags'].split(',');
+	}
+	// 先缓存, 把markdown的preview也缓存起来
+	Note.setNoteCache(hasChanged, false);
+	// 设置更新时间
+	Note.setNoteCache({"NoteId": hasChanged.NoteId, "UpdatedTime": (new Date()).format("yyyy-MM-ddThh:mm:ss.S")}, false);
+	Note.clearCacheByNotebookId(hasChanged.NotebookId);
+}
 
 // 更新池里的笔记
 Note.updatePoolNote = function() {

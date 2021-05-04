@@ -61,19 +61,24 @@ try {
 
 // create km instance
 km = KM.getMinder('kityminder', window.KITYMINDER_CONFIG);
-
+parent.km = km;
 // init ui for instance
 km.initUI(function () {
     $('#loading').hide();
 });
 if (parent && parent.LEAUI_MIND) {
     var json = parent.LEAUI_MIND.json;
-    if (json) {
-        try {
-            json = json.replace(/Ж/g, "'");
-            var json = JSON.parse(json);
-            km.importJson(json);
-        } catch(e) {console.log(e)};
+    var md  = parent.LEAUI_MIND.md;
+    if (md) {
+        km.importJson(json);
+    } else{
+        if (json) {
+            try {
+                json = json.replace(/Ж/g, "'");
+                var json = JSON.parse(json);
+                km.importJson(json);
+            } catch(e) {console.log(e)};
+        }
     }
 }
 
