@@ -251,7 +251,7 @@
 .fui-dialog .fui-dialog-head .fui-close-button .fui-close-button-icon {
   width: 16px;
   height: 16px;
-  background: url("images/close.png?_=1459219101658") no-repeat 0 0;
+  background: url("../images/close.png?_=1459219101658") no-repeat 0 0;
 }
 /**
  * FUI 通用样式定义
@@ -517,10 +517,10 @@
 .fui-spin-button .fui-spin-down-btn .fui-icon {
   width: 16px;
   height: 9px;
-  background: url("images/up.png?_=1459219101658") no-repeat 3px 1.5px;
+  /* background: url("images/up.png?_=1459219101658") no-repeat 3px 1.5px; */
 }
 .fui-spin-button .fui-spin-down-btn .fui-icon {
-  background-image: url("images/down.png?_=1459219101658");
+  /* background-image: url("images/down.png?_=1459219101658"); */
 }
 /**
  * 通用button
