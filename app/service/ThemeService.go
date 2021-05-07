@@ -408,7 +408,7 @@ func (this *ThemeService) ExportTheme(userId, themeId string) (ok bool, path str
 	// Log(theme.Path)
 	if theme.Path == "" ||
 		(!strings.HasPrefix(theme.Path, "public/upload") &&
-			!strings.HasPrefix(theme.Path, "public/blog/themes")) ||
+			!strings.HasPrefix(theme.Path, "public/js/blog/themes")) ||
 		strings.Contains(theme.Path, "..") {
 		return
 	}
