@@ -546,8 +546,8 @@ function initEditor() {
 		plugins : [
 				"autolink link leaui_image leaui_mindmap lists hr", "paste",
 				"searchreplace leanote_nav leanote_code tabfocus",
-				"table textcolor" ], // nonbreaking directionality charmap
-		toolbar1 : "formatselect | forecolor backcolor | bold italic underline strikethrough | leaui_image leaui_mindmap | leanote_code leanote_inline_code | bullist numlist | alignleft aligncenter alignright alignjustify",
+				"table textcolor", "leaui_drawio" ], // nonbreaking directionality charmap
+		toolbar1 : "formatselect | forecolor backcolor | bold italic underline strikethrough | leaui_image leaui_mindmap | leaui_drawio |leanote_code leanote_inline_code | bullist numlist | alignleft aligncenter alignright alignjustify",
 		toolbar2 : "outdent indent blockquote | link unlink | table | hr removeformat | subscript superscript | searchreplace | pastetext | leanote_ace_pre | fontselect fontsizeselect",
 
 		// 使用tab键: http://www.tinymce.com/wiki.php/Plugin3x:nonbreaking
