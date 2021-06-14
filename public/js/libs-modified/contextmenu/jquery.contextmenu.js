@@ -265,7 +265,7 @@ LEA.cmroot = 1;
         });
 
         function removeContextmenuClass() {
-            Note.$itemList.find('li').removeClass('contextmenu-hover');
+            NoteList.$itemList.find('li').removeClass('contextmenu-hover');
         }
 
         // life , 之前是document, 绑定document即使stopPro也会执行到这里

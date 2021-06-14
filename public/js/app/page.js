@@ -11,149 +11,6 @@ function sendLog (key, value) {
 	ajaxGet('/index/log', {key: key, value: value});
 }
 
-//----------------------
-// 编辑器模式
-function editorMode() {
-	this.writingHash = "writing";
-	this.normalHash = "normal";
-	this.isWritingMode = location.hash.indexOf(this.writingHash) >= 0;
-	this.toggleA = null;
-}
-
-editorMode.prototype.toggleAText = function(isWriting) {
-	var self = this;
-	setTimeout(function() {
-		var toggleA = $(".toggle-editor-mode a");
-		var toggleSpan = $(".toggle-editor-mode span");
-		if(isWriting) {
-			toggleA.attr("href", "#" + self.normalHash);
-			toggleSpan.text(getMsg("normalMode"));
-		} else {
-			toggleA.attr("href", "#" + self.writingHash);
-			toggleSpan.text(getMsg("writingMode"));
-		}	
-	}, 0);
-}
-editorMode.prototype.isWriting = function(hash) {
-	if(!hash) {
-		hash = location.hash;
-	}
-	return hash.indexOf(this.writingHash) >= 0
-}
-editorMode.prototype.init = function() {
-	this.$themeLink = $("#themeLink");
-	this.changeMode(this.isWritingMode);
-	var self = this;
-	$(".toggle-editor-mode").click(function(e) {
-		e.preventDefault();
-		saveBookmark();
-		var $a = $(this).find("a");
-		var isWriting = self.isWriting($a.attr("href"));
-		self.changeMode(isWriting);
-		// 
-		if(isWriting) {
-			setHash("m", self.writingHash);
-		} else {
-			setHash("m", self.normalHash);
-		}
-		
-		restoreBookmark();
-	});
-}
-// 改变模式
-editorMode.prototype.changeMode = function(isWritingMode) {
-	this.toggleAText(isWritingMode);
-	if(isWritingMode) {
-		this.writtingMode();
-	} else {
-		this.normalMode();
-	}
-};
-
-editorMode.prototype.resizeEditor = function() {
-	// css还没渲染完
-	setTimeout(function() {
-		resizeEditor();
-	}, 10);
-	setTimeout(function() {
-		resizeEditor();
-	}, 20);
-	setTimeout(function() {
-		resizeEditor();
-	}, 500);
-}
-editorMode.prototype.normalMode = function() {
-	// 最开始的时候就调用?
-	/*
-	var $c = $("#editorContent_ifr").contents();
-	$c.contents().find("#writtingMode").remove();
-	$c.contents().find('link[href$="editor-writting-mode.css"]').remove();
-	*/
-
-	$("#noteItemListWrap, #notesAndSort").show();
-	$("#noteList").unbind("mouseenter").unbind("mouseleave"); 
-	
-	var theme = UserInfo.Theme || "default";
-	theme += ".css";
-	var $themeLink = $("#themeLink");
-	// 如果之前不是normal才换
-	if(this.$themeLink.attr('href').indexOf('writting-overwrite.css') != -1) {
-		this.$themeLink.attr("href", LEA.sPath + "/css/theme/" + theme);
-	}
-	
-	$("#noteList").width(UserInfo.NoteListWidth);
-	$("#note").css("left", UserInfo.NoteListWidth);
-
-	this.isWritingMode = false;
-	this.resizeEditor();
-};
-
-editorMode.prototype.writtingMode = function() {
-	if (Note.inBatch) {
-		return;
-	}
-	if(this.$themeLink.attr('href').indexOf('writting-overwrite.css') == -1) {
-		this.$themeLink.attr("href", LEA.sPath + "/css/theme/writting-overwrite.css");
-	}
-
-	/*
-	setTimeout(function() {
-		var $c = $("#editorContent_ifr").contents();
-		$c.contents().find("head").append('<link type="text/css" rel="stylesheet" href="/css/editor/editor-writting-mode.css" id="writtingMode">');
-	}, 0);
-	*/
-		
-	$("#noteItemListWrap, #notesAndSort").fadeOut();
-	$("#noteList").hover(function() {
-		$("#noteItemListWrap, #notesAndSort").fadeIn();
-	}, function() {
-		$("#noteItemListWrap, #notesAndSort").fadeOut();
-	});
-	
-	// 点击扩展会使html的height生成, 切换后会覆盖css文件的
-	// $("#mceToolbar").css("height", "40px");
-	
-	//$("#pageInner").addClass("animated fadeInUp");
-
-	this.resizeEditor();
-	
-	$("#noteList").width(250);
-	$("#note").css("left", 0);
-	
-	// 切换到写模式
-	Note.toggleWriteable();
-
-	this.isWritingMode = true;
-};
-
-editorMode.prototype.getWritingCss = function() {
-	if(this.isWritingMode) {
-		return ["/css/editor/editor-writting-mode.css"];
-	}
-	return [];
-}
-var em = new editorMode();
-LEA.em = em;
 
 //----------------
 // 拖拉改变变宽度
@@ -360,7 +217,7 @@ Mobile = {
 		if(hash.indexOf("noteId") != -1) {
 			self.toEditor(false);
 			var noteId = hash.substr(8);
-			Note.changeNote(noteId, false, false);
+			NoteList.changeNote(noteId, false, false);
 		} else {
 			// 笔记本和笔记列表
 			self.toNormal(false);
@@ -547,7 +404,7 @@ function initEditor() {
 				"autolink link leaui_image leaui_mindmap lists hr", "paste",
 				"searchreplace leanote_nav leanote_code tabfocus",
 				"table textcolor", "leaui_drawio" ], // nonbreaking directionality charmap
-		toolbar1 : "formatselect | forecolor backcolor | bold italic underline strikethrough | leaui_image leaui_mindmap | leaui_drawio |leanote_code leanote_inline_code | bullist numlist | alignleft aligncenter alignright alignjustify",
+		toolbar1 : "formatselect | forecolor backcolor | bold italic underline strikethrough | leaui_image leaui_mindmap leaui_drawio | leanote_code leanote_inline_code | bullist numlist | alignleft aligncenter alignright alignjustify",
 		toolbar2 : "outdent indent blockquote | link unlink | table | hr removeformat | subscript superscript | searchreplace | pastetext | leanote_ace_pre | fontselect fontsizeselect",
 
 		// 使用tab键: http://www.tinymce.com/wiki.php/Plugin3x:nonbreaking
@@ -851,33 +708,6 @@ function hideMask () {
 		// $ul.css("max-height", getMaxDropdownHeight(this));
 	});
 	
-	/*
-	//--------
-	// 建议
-	$("#yourSuggestions").click(function() {
-		showDialog2("#suggestionsDialog");
-	});
-	$("#suggestionBtn").click(function(e) {
-		e.preventDefault();
-		var suggestion = $.trim($("#suggestionTextarea").val());
-		if(!suggestion) {
-			$("#suggestionMsg").html("请输入您的建议, 谢谢!").show().addClass("alert-warning").removeClass("alert-success");
-			$("#suggestionTextarea").focus();
-			return;
-		}
-		$("#suggestionBtn").html("正在处理...").addClass("disabled");
-		$("#suggestionMsg").html("正在处理...");
-		$.post("/suggestion", {suggestion: suggestion}, function(ret) {
-			$("#suggestionBtn").html("提交").removeClass("disabled");
-			if(ret.Ok) {
-				$("#suggestionMsg").html("谢谢反馈, 我们会第一时间处理, 祝您愉快!").addClass("alert-success").removeClass("alert-warning").show();
-			} else {
-				$("#suggestionMsg").html("出错了").show().addClass("alert-warning").removeClass("alert-success");
-			}
-		});
-	});
-	*/
-	
 	// 编辑器模式
 	em.init();
 	
@@ -915,7 +745,7 @@ var Pjax = {
 	// pjax调用
 	// popstate事件发生时, 转换到noteId下, 此时要转换notebookId
 	changeNotebookAndNote: function(noteId) {
-		var note = Note.getNote(noteId);
+		var note = SharedData.getNote(noteId);
 		if(!note) {
 			return;
 		}
@@ -933,14 +763,14 @@ var Pjax = {
 		if(!isShare) {
 			// 先切换到notebook下, 得到notes列表, 再changeNote
 			Notebook.changeNotebook(notebookId, function(notes) {
-				Note.renderNotes(notes);
+				NoteList.renderNotes(notes);
 				// 不push state
 				Note.changeNoteForPjax(noteId, false, true);
 			});
 		// 共享笔记
 		} else {
 			Share.changeNotebook(note.UserId, notebookId, function(notes) {
-				Note.renderNotes(notes);
+				NoteList.renderNotes(notes);
 				// 不push state
 				Note.changeNoteForPjax(noteId, false, true);
 			});
@@ -1553,7 +1383,7 @@ function _initPage(srcNote, isTop) {
 		Share.firstRenderShareNote(curSharedUserId, curSharedNoteNotebookId, curNoteId);
 	// 初始打开的是我的笔记
 	} else {
-		Note.setNoteCache(noteContentJson);
+		SharedData.initAllNotesList(notes);
 		// 判断srcNote是否在notes中
 		var isExists = false;
 		if (isTop && srcNote && notes) {
@@ -1571,7 +1401,7 @@ function _initPage(srcNote, isTop) {
 			}
 		}
 
-		Note.renderNotes(notes);
+		NoteList.renderNotes(notes);
 
 		if(curNoteId) {
 			// 指定某个note时才target notebook, /note定位到最新
@@ -1598,7 +1428,7 @@ function _initPage(srcNote, isTop) {
 	// 指定笔记, 也要保存最新笔记
 	if(latestNotes.length > 0) {
 		for(var i = 0; i < latestNotes.length; ++i) {
-			Note.addNoteCache(latestNotes[i]);
+			SharedData.setNoteContent(latestNotes[i]);
 		}
 	}
 	

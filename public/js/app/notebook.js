@@ -436,8 +436,8 @@ Notebook.changeNav = function() {
 	$("#notebookNavForNewNote").html(html);
 	
 	// 移动, 复制重新来, 因为nav变了, 移动至-----的notebook导航也变了
-	Note.initContextmenu();
-	Share.initContextmenu(Note.notebooksCopy);
+	NoteList.initContextmenu();
+	Share.initContextmenu(NoteList.notebooksCopy);
 };
 
 /**
@@ -609,18 +609,18 @@ Notebook.changeNotebook = function(notebookId, callback) {
 	} else if(Notebook.isAllNotebookId(notebookId)) {
 		param = {};
 		// 得到全部的...
-		cacheNotes = Note.getNotesByNotebookId();
+		cacheNotes = SharedData.getNotesByNotebookId();
 		// 数量一致
 		if(!isEmpty(cacheNotes)) { 
 			if(callback) {
 				callback(cacheNotes);
 			} else {
-				Note.renderNotesAndFirstOneContent(cacheNotes, true);
+				NoteList.renderNotesAndFirstOneContent(cacheNotes, true);
 			}
 			return;
 		} 
 	} else {
-		cacheNotes = Note.getNotesByNotebookId(notebookId);
+		cacheNotes = SharedData.getNotesByNotebookId(notebookId);
 		var notebook = Notebook.cache[notebookId];
 		var len = cacheNotes ? cacheNotes.length : 0;
 		// alert( notebook.NumberNotes + " " + len);
@@ -628,11 +628,11 @@ Notebook.changeNotebook = function(notebookId, callback) {
 			if(callback) {
 				callback(cacheNotes);
 			} else {
-				Note.renderNotesAndFirstOneContent(cacheNotes, true);
+				NoteList.renderNotesAndFirstOneContent(cacheNotes, true);
 			}
 			return;
 		} else {
-			Note.clearCacheByNotebookId(notebookId);
+			// Note.clearCacheByNotebookId(notebookId);
 			log('数量不一致');
 		}
 	}
@@ -653,7 +653,8 @@ Notebook.changeNotebook = function(notebookId, callback) {
 			if(callback) {
 				callback(cacheNotes);
 			} else {
-				Note.renderNotesAndFirstOneContent(cacheNotes, false);
+
+				NoteList.renderNotesAndFirstOneContent(cacheNotes, false);
 			}
 			me.hideNoteAndEditorLoading();
 		});
@@ -693,7 +694,7 @@ Notebook.changeNotebookForNewNote = function(notebookId) {
 	// 这里可以缓存起来, note按notebookId缓存
 	ajaxGet(url, param, function(ret) {
 		// note 导航
-		Note.renderNotes(ret, true);
+		NoteList.renderNotes(ret, true);
 	});
 };
 
@@ -736,7 +737,7 @@ Notebook.setNotebook2Blog = function(target) {
 	} else if(Notebook.curNotebookId == Notebook.allNotebookId){
 		$("#noteItemList .item").each(function(){
 			var noteId = $(this).attr("noteId");
-			var note = Note.cache[noteId];
+			var note = SharedData.getNote[noteId];
 			if(note.NotebookId == notebookId) {
 				if (isBlog) {
 					$(this).addClass('item-b');
@@ -937,7 +938,7 @@ $(function() {
 			items.push("set2Blog");
 		}
 		// 是否还有笔记
-		if(Note.notebookHasNotes(notebookId)) {
+		if(SharedData.notebookHasNotes(notebookId)) {
 			items.push("delete");
 		}
         menu.applyrule({

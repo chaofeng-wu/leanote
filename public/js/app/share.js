@@ -318,7 +318,7 @@ Share.changeNotebook = function(userId, notebookId, callback) {
 Share.hasUpdatePerm = function(noteId) {
 	var note = Share.cache[noteId];
 	if(!note) {
-		note = Note.getNote(noteId);
+		note = SharedData.getNote(noteId);
 	}
 	if(!note || !note.Perm) {
 		return false;
@@ -412,7 +412,7 @@ Share.initContextmenu = function(notebooksCopy) {
 	}
 	function applyrule(menu) {
 		var noteId = $(this).attr("noteId");
-		var note = Note.getNote(noteId);
+		var note = SharedData.getNote(noteId);
 		var items = [];
 		if(Note.inBatch || !note) {
 			items.push("delete");
