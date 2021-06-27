@@ -1,34 +1,11 @@
-Notebook.curNotebookId = "";
-Notebook.cache = {}; // notebookId => {};
-Notebook.notebooks = []; // 按次序
 // <li role="presentation"><a role="menuitem" tabindex="-1" href="#">CSS</a></li>	
 Notebook.notebookNavForListNote = ""; // html 为了note list上面和新建时的ul
 Notebook.notebookNavForNewNote = ""; // html 为了note list上面和新建时的ul
 
-// 设置缓存
-Notebook.setCache = function(notebook) {
-	var notebookId = notebook.NotebookId;
-	if(!notebookId) {
-		return;
-	}
-	if(!Notebook.cache[notebookId]) {
-		Notebook.cache[notebookId] = {};
-	}
-	$.extend(Notebook.cache[notebookId], notebook);
-}
-
-Notebook.getCurNotebookId = function() {
-	return Notebook.curNotebookId;
-};
-
-Notebook.getCurNotebook = function() {
-	return Notebook.cache[Notebook.curNotebookId];
-};
-
 // 笔记本的笔记数量更新
 Notebook._updateNotebookNumberNotes = function(notebookId, n) {
 	var self = this;
-	var notebook = self.getNotebook(notebookId);
+	var notebook = Cache.getNotebookById(notebookId);
 	if(!notebook) {
 		return;
 	}
@@ -49,21 +26,6 @@ Notebook.minusNotebookNumberNotes = function(notebookId) {
 	self._updateNotebookNumberNotes(notebookId, -1);
 };
 
-// 得到notebook标题, 给note显示其notebook标题用
-// called by Note
-Notebook.getNotebook = function(notebookId) {
-	return Notebook.cache[notebookId];
-}
-// called by Note
-Notebook.getNotebookTitle = function(notebookId) {
-	var notebook = Notebook.cache[notebookId];
-	if(notebook) {
-		return notebook.Title;
-	} else {
-		return "未知";
-	}
-}
-
 /**
  * 我的notebooks
 <ul class="folderBody" id="notebookList">
@@ -73,7 +35,7 @@ Notebook.getNotebookTitle = function(notebookId) {
 </ul>
  */
  
-Notebook.getTreeSetting = function(isSearch, isShare){ 
+Notebook.getTreeSetting = function(isSearch){ 
 	var noSearch = !isSearch;
 	
 	var self = this;
@@ -84,15 +46,10 @@ Notebook.getTreeSetting = function(isSearch, isShare){
 		icoObj = $("#" + treeId + " #" + treeNode.tId + "_ico");
 		switchObj.remove();
 		icoObj.before(switchObj);
-		if(!isShare) {
-			if(!Notebook.isAllNotebookId(treeNode.NotebookId) && !Notebook.isTrashNotebookId(treeNode.NotebookId)) {
-				icoObj.after($('<span class="notebook-number-notes" id="numberNotes_' + treeNode.NotebookId + '">' + (treeNode.NumberNotes || 0) + '</span>'));
-				icoObj.after($('<span class="fa notebook-setting" title="setting"></span>'));
-			}
-		} else {
-			if(!Share.isDefaultNotebookId(treeNode.NotebookId)) {
-				icoObj.after($('<span class="fa notebook-setting" title="setting"></span>'));
-			}
+	
+		if(!Cache.isLatestNotebookId(treeNode.NotebookId) && !Cache.isTrashNotebookId(treeNode.NotebookId)) {
+			icoObj.after($('<span class="notebook-number-notes" id="numberNotes_' + treeNode.NotebookId + '">' + (treeNode.NumberNotes || 0) + '</span>'));
+			icoObj.after($('<span class="fa notebook-setting" title="setting"></span>'));
 		}
 		if (treeNode.level > 1) {
 			var spaceStr = "<span style='display: inline-block;width:" + (spaceWidth * treeNode.level)+ "px'></span>";
@@ -144,7 +101,7 @@ Notebook.getTreeSetting = function(isSearch, isShare){
 		ajaxData.siblings = [];
 		for(var i in nodes) {
 			var notebookId = nodes[i].NotebookId;
-			if(!Notebook.isAllNotebookId(notebookId) && !Notebook.isTrashNotebookId(notebookId)) {
+			if(!Cache.isLatestNotebookId(notebookId) && !Cache.isTrashNotebookId(notebookId)) {
 				ajaxData.siblings.push(notebookId);
 			}
 		}
@@ -156,25 +113,16 @@ Notebook.getTreeSetting = function(isSearch, isShare){
 			Notebook.changeNav();
 		}, 100);
 	}
-	
-	if(!isShare) {
-		var onClick =  function(e, treeId, treeNode) {
-			var notebookId = treeNode.NotebookId;
-			Notebook.changeNotebook(notebookId);
-		};
-		var onDblClick = function(e) {
-			var notebookId = $(e.target).attr("notebookId");
-			if(!Notebook.isAllNotebookId(notebookId) && !Notebook.isTrashNotebookId(notebookId)) {
-				self.updateNotebookTitle(e.target);
-			}
+
+	var onClick =  function(e, treeId, treeNode) {
+		var notebookId = treeNode.NotebookId;
+		Notebook.changeNotebook(notebookId);
+	};
+	var onDblClick = function(e) {
+		var notebookId = $(e.target).attr("notebookId");
+		if(!Cache.isLatestNotebookId(notebookId) && !Cache.isTrashNotebookId(notebookId)) {
+			self.updateNotebookTitle(e.target);
 		}
-	} else {
-		var onClick =  function(e, treeId, treeNode) {
-			var notebookId = treeNode.NotebookId;
-			var fromUserId = $(e.target).closest('.friend-notebooks').attr("fromUserId");
-			Share.changeNotebook(fromUserId, notebookId);
-		};
-		var onDblClick = null;
 	}
 	
 	var setting = {
@@ -241,11 +189,7 @@ Notebook.getTreeSetting = function(isSearch, isShare){
 	
 	return setting;
 }
-Notebook.allNotebookId = "0";
-Notebook.trashNotebookId = "-1";
-Notebook.curNotebookIsTrashOrAll = function() {
-	return Notebook.curNotebookId == Notebook.trashNotebookId || Notebook.curNotebookId == Notebook.allNotebookId ;
-}
+
 Notebook.renderNotebooks = function(notebooks) {
 	var self = this;
 
@@ -259,9 +203,9 @@ Notebook.renderNotebooks = function(notebooks) {
 		notebook.Title = trimTitle(notebook.Title);
 	}
 	
-	notebooks = [{NotebookId: Notebook.allNotebookId, Title: getMsg("all"), drop:false, drag: false}].concat(notebooks);
-	notebooks.push({NotebookId: Notebook.trashNotebookId, Title: getMsg("trash"), drop:false, drag: false});
-	Notebook.notebooks = notebooks; // 缓存之
+	notebooks = [{NotebookId: Cache.latestNotesNotebookId, Title: getMsg("all"), drop:false, drag: false}].concat(notebooks);
+	notebooks.push({NotebookId: Cache.trashNotebookId, Title: getMsg("trash"), drop:false, drag: false});
+	Cache.notebooksList = notebooks; // 缓存之
 	
 	self.tree = $.fn.zTree.init($("#notebookList"), self.getTreeSetting(), notebooks);
 	
@@ -277,8 +221,8 @@ Notebook.renderNotebooks = function(notebooks) {
 			
 	// 缓存所有notebooks信息
 	if(!isEmpty(notebooks)) {
-		Notebook.curNotebookId = notebooks[0].NotebookId;
-		self.cacheAllNotebooks(notebooks);
+		Cache.curNotebookId = notebooks[0].NotebookId;
+		Cache.addNotebooksToNotebooksDict(notebooks);
 	}
 	
 	// 渲染nav
@@ -288,27 +232,12 @@ Notebook.renderNotebooks = function(notebooks) {
 	Notebook.changeNotebookNavForNewNote(notebooks[0].NotebookId);
 }
 
-Notebook.cacheAllNotebooks = function(notebooks) {
-	var self = this;
-	for(var i in notebooks) {
-		var notebook = notebooks[i];
-		Notebook.cache[notebook.NotebookId] = notebook;
-		if(!isEmpty(notebook.Subs)) {
-			self.cacheAllNotebooks(notebook.Subs);
-		}
-	}
-};
-
 // 展开到笔记本
-Notebook.expandNotebookTo = function(notebookId, userId) {
+Notebook.expandNotebookTo = function(notebookId) {
 	var me = this;
 	var selected = false;
 	var tree = me.tree;
-	
-	// 共享的
-	if(userId) {
-		tree = Share.trees[userId];
-	}
+
 	if(!tree) {
 		return;
 	}
@@ -352,17 +281,10 @@ Notebook.searchNotebookForAddNote = function(key) {
 		var notebooks2 = [];
 		for(var i in notebooks) {
 			var notebookId = notebooks[i].NotebookId;
-			if(!self.isAllNotebookId(notebookId) && !self.isTrashNotebookId(notebookId)) {
+			if(!Cache.isLatestNotebookId(notebookId) && !Cache.isTrashNotebookId(notebookId)) {
 				notebooks2.push(notebooks[i]);
 			}
 		}
-		if(isEmpty(notebooks2)) {
-			$("#notebookNavForNewNote").html("");
-		} else {
-			$("#notebookNavForNewNote").html(self.getChangedNotebooks(notebooks2));
-		}
-	} else {
-		$("#notebookNavForNewNote").html(self.everNavForNewNote);
 	}
 };
 
@@ -388,111 +310,13 @@ Notebook.searchNotebookForList = function(key) {
 		self.tree2 = null;
 		$search.hide();
 		$notebookList.show();
-		$("#notebookNavForNewNote").html(self.everNavForNewNote);
 	}
 };
 
-// 修改,添加,删除notebook后调用
-// 改变nav
-// 直接从html中取!
-Notebook.getChangedNotebooks = function(notebooks) {
-	var self = this;
-	var navForNewNote = "";
-	
-	var len = notebooks.length;
-	for(var i = 0; i < len; ++i) {
-		var notebook = notebooks[i];
-		
-		var classes = "";
-		if(!isEmpty(notebook.Subs)) {
-			classes = "dropdown-submenu";
-		}
-		var eachForNew = tt('<li role="presentation" class="clearfix ?"><div class="new-note-left pull-left" title="为该笔记本新建笔记" href="#" notebookId="?">?</div><div title="为该笔记本新建markdown笔记" class="new-note-right pull-left" notebookId="?">M</div>', classes, notebook.NotebookId, notebook.Title, notebook.NotebookId);
-		
-		if(!isEmpty(notebook.Subs)) {
-			eachForNew  += "<ul class='dropdown-menu'>";
-			eachForNew  += self.getChangedNotebooks(notebook.Subs);
-			eachForNew  += "</ul>";
-		}
-		
-		eachForNew  += '</li>';
-		
-		navForNewNote += eachForNew;
-	}
-	return navForNewNote;
-};
-
-Notebook.everNavForNewNote = "";
-Notebook.everNotebooks = [];
 Notebook.changeNav = function() {
-	var self = Notebook;
-	var notebooks = Notebook.tree.getNodes();
-	var pureNotebooks = notebooks.slice(1, -1); // 不含新和垃圾
-	var html = self.getChangedNotebooks(pureNotebooks);
-	
-	self.everNavForNewNote = html;
-	self.everNotebooks = pureNotebooks;
-	
-	$("#notebookNavForNewNote").html(html);
-	
 	// 移动, 复制重新来, 因为nav变了, 移动至-----的notebook导航也变了
 	NoteList.initContextmenu();
-	Share.initContextmenu(NoteList.notebooksCopy);
 };
-
-/**
- * 我的共享notebooks	    
- <div id="shareNotebooks">
-	 <div class="folderNote closed">
-      <div class="folderHeader">
-        <a>
-          <h1>
-            <i class="fa fa-angle-right"></i> 
-            Life's</h1>
-        </a>
-      </div>
-      <ul class="folderBody">
-        <li><a>Hadoop</a></li>
-        <li><a>Node webkit</a></li>
-        <li><a>Hadoop</a></li>
-        <li><a>Node webkit</a></li>
-      </ul>
-    </div>
- */
-// TODO 层级
-Notebook.renderShareNotebooks = function(sharedUserInfos, shareNotebooks) {
-	if(isEmpty(sharedUserInfos)) {
-		return;
-	}
-	
-	if(!shareNotebooks || typeof shareNotebooks != "object" || shareNotebooks.length < 0) {
-		return;
-	}
-	
-	var $shareNotebooks = $("#shareNotebooks");
-	var user2ShareNotebooks = {};
-	for(var i in shareNotebooks) {
-		var userNotebooks = shareNotebooks[i];
-		user2ShareNotebooks[userNotebooks.UserId] = userNotebooks;
-	}
-	for(var i in sharedUserInfos) {
-		var userInfo = sharedUserInfos[i];
-		var userNotebooks = user2ShareNotebooks[userInfo.UserId] || {ShareNotebooks:[]};
-		
-		userNotebooks.ShareNotebooks = [{NotebookId: "-2", Title: "默认共享"}].concat(userNotebooks.ShareNotebooks)
-
-		var username = userInfo.Username || userInfo.Email;
-		var header = tt('<div class="folderNote closed"><div class="folderHeader"><a><h1 title="? 的共享"><i class="fa fa-angle-right"></i>?</h1></a></div>', username, username);
-		var body = '<ul class="folderBody">';
-		for(var j in userNotebooks.ShareNotebooks) {
-			var notebook = userNotebooks.ShareNotebooks[j];
-			body += tt('<li><a notebookId="?">?</a></li>', notebook.NotebookId, notebook.Title)
-		}
-		body += "</ul>";
-		
-		$shareNotebooks.append(header + body + "</div>")
-	}
-}
 
 // 左侧导航, 选中某个notebook
 Notebook.selectNotebook = function(target) {
@@ -504,24 +328,20 @@ Notebook.selectNotebook = function(target) {
 Notebook.changeNotebookNavForNewNote = function(notebookId, title) {
 	// 没有notebookId, 则选择第1个notebook
 	// 第一个是全部笔记
-	if(!notebookId) {
-		var notebook = Notebook.notebooks[0];
+	if(!notebookId || !title) {
+		var notebook = Cache.notebooksList[0];
 		notebookId = notebook.NotebookId;
 		title = notebook.Title;
 	}
-	if(!title) {
-		var notebook = Notebook.cache[0];
-		title = notebook.Title;
-	}
-	
-	if(!Notebook.isAllNotebookId(notebookId) && !Notebook.isTrashNotebookId(notebookId)) {
+
+	if(!Cache.isLatestNotebookId(notebookId) && !Cache.isTrashNotebookId(notebookId)) {
 		$("#curNotebookForNewNote").html(title).attr("notebookId", notebookId);
 	} else if(!$("#curNotebookForNewNote").attr("notebookId")) {
 		// 但又没有一个笔记, 默认选第一个吧
 		// 这里很可能会死循环, 万一用户没有其它笔记呢?
 		// 服务端肯定要在新建一个用户时给他创建一个默认笔记本的
-		if(Notebook.notebooks.length > 2) {
-			var notebook = Notebook.notebooks[1];
+		if(Cache.notebooksList.length > 2) {
+			var notebook = Cache.notebooksList[1];
 			notebookId = notebook.NotebookId;
 			title = notebook.Title;
 			Notebook.changeNotebookNavForNewNote(notebookId, title);
@@ -536,11 +356,9 @@ Notebook.changeNotebookNavForNewNote = function(notebookId, title) {
 // 3 新建笔记 - js >
 // 转成我的nav <-> 共享
 Notebook.toggleToMyNav = function(userId, notebookId) {
-	$("#sharedNotebookNavForListNav").hide();
 	$("#myNotebookNavForListNav").show();
 	
 	$("#newMyNote").show();
-	$("#newSharedNote").hide();
 	
 	// 搜索tag隐藏
 	$("#tagSearch").hide();
@@ -552,7 +370,7 @@ Notebook.changeNotebookNav = function(notebookId) {
 	// 1 改变当前的notebook
 	Notebook.selectNotebook($(tt('#notebook [notebookId="?"]', notebookId)));
 	
-	var notebook = Notebook.cache[notebookId];
+	var notebook = Cache.notebooksDict[notebookId];
 	
 	if(!notebook) {
 		return;
@@ -565,19 +383,13 @@ Notebook.changeNotebookNav = function(notebookId) {
 	Notebook.changeNotebookNavForNewNote(notebookId, notebook.Title);
 }
 
-Notebook.isAllNotebookId = function(notebookId) {
-	return notebookId == Notebook.allNotebookId;
-};
-Notebook.isTrashNotebookId = function(notebookId) {
-	return notebookId == Notebook.trashNotebookId;
-};
 // 当前选中的笔记本是否是"所有"
 // called by Note
 Notebook.curActiveNotebookIsAll = function() {
-	return Notebook.isAllNotebookId($("#notebookList .curSelectedNode").attr("notebookId"));
+	return Cache.isLatestNotebookId($("#notebookList .curSelectedNode").attr("notebookId"));
 };
 Notebook.curActiveNotebookIsTrash = function() {
-	return Notebook.isTrashNotebookId($("#notebookList .curSelectedNode").attr("notebookId"));
+	return Cache.isTrashNotebookId($("#notebookList .curSelectedNode").attr("notebookId"));
 };
 
 // 改变笔记本
@@ -603,13 +415,13 @@ Notebook.changeNotebook = function(notebookId, callback) {
 	var param = {notebookId: notebookId};
 	
 	// 废纸篓
-	if(Notebook.isTrashNotebookId(notebookId)) {
+	if(Cache.isTrashNotebookId(notebookId)) {
 		url = "/note/listTrashNotes";
 		param = {};
-	} else if(Notebook.isAllNotebookId(notebookId)) {
+	} else if(Cache.isLatestNotebookId(notebookId)) {
 		param = {};
 		// 得到全部的...
-		cacheNotes = SharedData.getNotesByNotebookId();
+		cacheNotes = Cache.getNotesByNotebookId();
 		// 数量一致
 		if(!isEmpty(cacheNotes)) { 
 			if(callback) {
@@ -620,8 +432,8 @@ Notebook.changeNotebook = function(notebookId, callback) {
 			return;
 		} 
 	} else {
-		cacheNotes = SharedData.getNotesByNotebookId(notebookId);
-		var notebook = Notebook.cache[notebookId];
+		cacheNotes = Cache.getNotesByNotebookId(notebookId);
+		var notebook = Cache.notebooksDict[notebookId];
 		var len = cacheNotes ? cacheNotes.length : 0;
 		// alert( notebook.NumberNotes + " " + len);
 		if(len == notebook.NumberNotes) { 
@@ -673,14 +485,14 @@ Notebook.hideNoteAndEditorLoading = function() {
 // 还包括共享
 // called by Note
 Notebook.isCurNotebook = function(notebookId) {
-	return $(tt('#notebookList [notebookId="?"], #shareNotebooks [notebookId="?"]', notebookId, notebookId)).attr("class") == "active";
+	return $(tt('#notebookList [notebookId="?"]', notebookId)).attr("class") == "active";
 }
 
 // 改变nav, 为了新建note
 // called by Note
 Notebook.changeNotebookForNewNote = function(notebookId) {
 	// 废纸篓
-	if(Notebook.isTrashNotebookId(notebookId) || Notebook.isAllNotebookId(notebookId)) {
+	if(Cache.isTrashNotebookId(notebookId) || Cache.isLatestNotebookId(notebookId)) {
 		return;
 	}
 	
@@ -698,29 +510,12 @@ Notebook.changeNotebookForNewNote = function(notebookId) {
 	});
 };
 
-//---------------------------
-// 显示共享信息
-Notebook.listNotebookShareUserInfo = function(target) {
-	var notebookId = $(target).attr("notebookId");
-	showDialogRemote("/share/listNotebookShareUserInfo", {notebookId: notebookId});
-}
-// 共享笔记本
-Notebook.shareNotebooks= function(target) {
-	var title = $(target).text();
-	showDialog("dialogShareNote", {title: "分享笔记本给好友-" + title});
-	setTimeout(function() {
-		$("#friendsEmail").focus();
-	}, 500);
-	var notebookId = $(target).attr("notebookId");
-	
-	shareNoteOrNotebook(notebookId, false);
-}
 
 //-----------------------------
 // 设为blog/unset
 Notebook.setNotebook2Blog = function(target) {
 	var notebookId = $(target).attr("notebookId");
-	var notebook = Notebook.cache[notebookId];
+	var notebook = Cache.notebooksDict[notebookId];
 	var isBlog = true;
 	if(notebook.IsBlog != undefined) {
 		isBlog = !notebook.IsBlog;
@@ -737,7 +532,7 @@ Notebook.setNotebook2Blog = function(target) {
 	} else if(Notebook.curNotebookId == Notebook.allNotebookId){
 		$("#noteItemList .item").each(function(){
 			var noteId = $(this).attr("noteId");
-			var note = SharedData.getNote[noteId];
+			var note = Cache.getNote(noteId);
 			if(note.NotebookId == notebookId) {
 				if (isBlog) {
 					$(this).addClass('item-b');
@@ -752,7 +547,7 @@ Notebook.setNotebook2Blog = function(target) {
 		if(ret) {
 			// 这里要设置notebook下的note的blog状态
 			Note.setAllNoteBlogStatus(notebookId, isBlog);
-			Notebook.setCache({NotebookId: notebookId, IsBlog: isBlog});
+			Cache.setNotebook({NotebookId: notebookId, IsBlog: isBlog});
 		}
 	});
 }
@@ -774,7 +569,7 @@ Notebook.doUpdateNotebookTitle = function(notebookId, newTitle) {
 	var self = Notebook;
 	ajaxPost("/notebook/updateNotebookTitle", {notebookId: notebookId, title: newTitle}, function(ret) {
 		// 修改缓存
-		Notebook.cache[notebookId].Title = newTitle;
+		Cache.notebooksDict[notebookId].Title = newTitle;
 		// 改变nav
 		Notebook.changeNav();
 		
@@ -807,7 +602,7 @@ Notebook.doAddNotebook = function(notebookId, title, parentNotebookId) {
 	var self = Notebook;
 	ajaxPost("/notebook/addNotebook", {notebookId: notebookId, title: title, parentNotebookId: parentNotebookId}, function(ret) {
 		if(ret.NotebookId) {
-			Notebook.cache[ret.NotebookId] = ret;
+			Cache.notebooksDict[ret.NotebookId] = ret;
 			var notebook = self.tree.getNodeByTId(notebookId);
 			$.extend(notebook, ret);
 			notebook.IsNew = false;
@@ -854,7 +649,7 @@ Notebook.deleteNotebook = function(target) {
 			if(self.tree2) {
 				self.tree2.removeNode(self.tree2.getNodeByTId(notebookId));
 			}
-			delete Notebook.cache[notebookId];
+			delete Cache.notebooksDict[notebookId];
 			
 			// 改变nav
 			Notebook.changeNav();
@@ -890,7 +685,6 @@ $(function() {
 	var notebookListMenu = {
 		width: 180, 
 		items: [
-			{ text: getMsg("shareToFriends"), alias: 'shareToFriends', icon: "", faIcon: "fa-share-square-o", action: Notebook.listNotebookShareUserInfo},
 			{ type: "splitLine" },
 			{ text: getMsg("publicAsBlog"), alias: 'set2Blog', faIcon: "fa-bold", action: Notebook.setNotebook2Blog },
 			{ text: getMsg("cancelPublic"), alias: 'unset2Blog',faIcon: "fa-undo", action: Notebook.setNotebook2Blog }, // Unset
@@ -909,8 +703,6 @@ $(function() {
 	var notebookListMenu2 = {
 		width: 180, 
 		items: [
-			{ text: getMsg("shareToFriends"), alias: 'shareToFriends', icon: "", faIcon: "fa-share-square-o", action: Notebook.listNotebookShareUserInfo},
-			{ type: "splitLine" },
 			{ text: getMsg("publicAsBlog"), alias: 'set2Blog', faIcon: "fa-bold", action: Notebook.setNotebook2Blog },
 			{ text: getMsg("cancelPublic"), alias: 'unset2Blog',faIcon: "fa-undo", action: Notebook.setNotebook2Blog }, // Unset
 			{ type: "splitLine" },
@@ -925,7 +717,7 @@ $(function() {
 	
 	function applyrule(menu) {
 		var notebookId = $(this).attr("notebookId");
-		var notebook = Notebook.cache[notebookId];
+		var notebook = Cache.notebooksDict[notebookId];
 		if(!notebook) {
 			return;
 		}
@@ -938,7 +730,7 @@ $(function() {
 			items.push("set2Blog");
 		}
 		// 是否还有笔记
-		if(SharedData.notebookHasNotes(notebookId)) {
+		if(Cache.notebookHasNotes(notebookId)) {
 			items.push("delete");
 		}
         menu.applyrule({
@@ -950,7 +742,7 @@ $(function() {
 	// 哪个不能
 	function beforeContextMenu() {
 		var notebookId = $(this).attr("notebookId");
-		return !Notebook.isTrashNotebookId(notebookId) && !Notebook.isAllNotebookId(notebookId);
+		return !Cache.isTrashNotebookId(notebookId) && !Cache.isLatestNotebookId(notebookId);
 	}
 	
 	Notebook.contextmenu = $("#notebookList li a").contextmenu(notebookListMenu);

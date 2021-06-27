@@ -95,32 +95,6 @@ function log(o) {
 
 					</div>
 					
-					<!-- 只为新建别人的笔记 -->
-					<div id="newSharedNote" style="display: none">
-						<a id="newSharedNoteBtn" class="new-note">
-							<!--<i class="fa fa-file-o"></i> -->
-							<span class="new-note-text">{{msg . "newNote"}}</span>
-							<span class="new-note-text-abbr">{{msg . "new"}}</span>
-						</a>
-						<span class="new-split">|</span>
-						<a id="newShareNoteMarkdownBtn" class="new-note new-markdown" title="{{msg . "newMarkdown"}}">
-							<span class="new-markdown-text">{{msg . "newMarkdown"}}</span>
-							<span class="new-markdown-text-abbr">Md</span>
-						</a>
-						<span class="for-split"> - </span>
-						<span id="curNotebookForNewSharedNote" notebookId="" userId=""></span>
-
-						<!--
-						<div class="dropdown" style="display: inline-block">
-							<a id="listShareNotebookDropdownMenu" class="ios7-a dropdown-toggle" data-toggle="dropdown"> 
-								<i class="fa fa-angle-down"></i>
-							</a>
-							<div class="dropdown-menu dropdown-list" id="searchNotebookForAddShareDropdownList" >
-								<ul id="notebookNavForNewSharedNote"></ul>
-							</div>
-						</div>
-						-->
-					</div>				
 				</div>
 				
 				<div class="pull-left" id="leanoteMsg">
@@ -217,37 +191,6 @@ function log(o) {
 				{{end}}
 				{{end}}
 				
-				<!--
-				<ul id="setting" class="pull-right">
-					<li class="dropdown messages">
-						<a class="dropdown-toggle" data-toggle="dropdown"> 
-							<span aria-hidden="true" class="icon se7en-flag"></span>
-							<div class="sr-only">Messages</div>
-							<p class="counter">3</p>
-						</a>
-						<ul class="dropdown-menu">
-							<li><a href="#"> c@c.com 共享了笔记给你 是否接受? </a></li>
-							<li><a href="#"> d@c.com 共享了笔记给你 是否接受? </a></li>
-						</ul>
-					</li>
-
-					<li class="dropdown settings">
-						<a class="dropdown-toggle" data-toggle="dropdown"> 
-							<span aria-hidden="true" class="icon se7en-gear"></span>
-							<div class="sr-only">Settings</div>
-						</a>
-						<ul class="dropdown-menu">
-							<li><a class="settings-link blue"><span></span>Blue</a></li>
-							<li><a class="settings-link green"><span></span>Green</a></li>
-							<li><a class="settings-link orange"><span></span>Orange</a>
-							</li>
-							<li><a class="settings-link magenta"><span></span>Magenta</a>
-							</li>
-							<li><a class="settings-link gray"><span></span>Gray</a></li>
-						</ul>
-					</li>
-				</ul>
-				-->
 				<div style="clear: both"></div>
 			</div>
 
@@ -294,19 +237,6 @@ function log(o) {
 							</ul>
 						</div>
 						
-						<div class="folderNote closed" id="myShareNotebooks">
-							<div class="folderHeader">
-								<i class="fa fa-user fa-left"></i>
-								<span>
-									{{msg . "share"}}
-								</span>
-							</div>
-	
-							<ul class="folderBody" id="shareNotebooks">
-								
-							</ul>
-						</div>
-	
 					</div>
 					
 					<!-- 缩小版 todo 不要展示, 点击展开即可 -->
@@ -321,11 +251,6 @@ function log(o) {
 							<i class="fa fa-bookmark"></i>
 							<ul class="dropdown-menu" id="minTagNav">
 							</ul>
-						</div>
-						<div id="minShareNotebooks">
-							<div class="minContainer" target="#friendContainer0" title="{{msg . "share"}}">
-								<i class="fa fa-user"></i>
-							</div>
 						</div>
 					</div>
 					
@@ -356,12 +281,6 @@ function log(o) {
 								</a>
 							</div>
 							
-							<!-- 共享的笔记本 -->
-							<div class="dropdown" id="sharedNotebookNavForListNav" style="display: none">
-								<a class="ios7-a">
-									<span id="curSharedNotebookForListNote">{{msg . "all"}}</span>
-								</a>
-							</div>
 						</div>
 
 						<!-- tag search -->
@@ -698,25 +617,6 @@ function log(o) {
 						    <div id="wmd-button-bar" class="hide"></div>
 						</div>	
 					
-						<!--
-						<div id="wmd-button-bar" id="mdBar"></div>
-						<div class="editorBg"></div>
-	                    
-						<div class="clearfix" id="mdEditorPreview">
-							<div id="left-column">
-				                <div id="wmd-panel-editor" class="wmd-panel-editor">
-				                    <textarea class="wmd-input theme" id="wmd-input" spellcheck="false" tabindex="3"></textarea>
-				                </div>
-				            </div>
-				            <div id="mdSplitter"></div>
-				            <div id="right-column">
-				                <div id="wmd-panel-preview" class="wmd-panel-preview preview-container">
-				                    <div id="wmd-preview" class="wmd-preview"></div>
-				                </div>
-				            </div>
-						</div>
-	                    <textarea id="md-section-helper"></textarea>
-	                    -->
 					</div>
 				</div>	
 			</div>
@@ -877,12 +777,8 @@ LEA.locale = "{{.locale}}";
 var UrlPrefix = '{{.siteUrl}}';
 var UserInfo = {{.userInfo|jsonJs}};
 var notebooks = {{.notebooks|jsonJs}};
-var shareNotebooks = {{.shareNotebooks|jsonJs}};
-var sharedUserInfos = {{.sharedUserInfos|jsonJs}};
 var curNoteId = '{{.curNoteId}}';
 var curNotebookId = '{{.curNotebookId}}';
-var curSharedNoteNotebookId = '{{.curSharedNoteNotebookId}}';
-var curSharedUserId = '{{.curSharedUserId}}';
 var notes = {{.notes|jsonJs}};
 var latestNotes = {{if .latestNotes}}{{.latestNotes|jsonJs}}{{else}}[]{{end}};
 var noteContentJson = {{.noteContentJson|jsonJs}};
@@ -913,6 +809,8 @@ var GlobalConfigs = {{.globalConfigs|jsonJs}};
 
 <script src="/js/libs-modified/ace/ace.js"></script>
 
+<script src="/js/app/LEA.js"></script>
+<script src="/js/app/cache.js"></script>
 <!-- dev -->
 <script src="/js/libs-modified/jQuery-slimScroll/jquery.slimscroll.js"></script>
 <script src="/js/libs-modified/contextmenu/jquery.contextmenu.js"></script>
@@ -930,12 +828,13 @@ var GlobalConfigs = {{.globalConfigs|jsonJs}};
 <script src="/js/app/Mobile.js"></script>
 <script src="/js/app/AceEditor.js"></script>
 <script src="/js/app/page.js?t=1"></script>
+<script src="/js/app/main.js"></script>
 <script src="/js/app/markdownToMindmap.js"></script>
 <!-- /dev -->
 
 <!-- pro_app_js -->
 <script>
-initPage();
+init();
 // 当tinymce.dev.js时, 请注释require
 window.require = {
     baseUrl: '/public',

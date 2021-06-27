@@ -42,7 +42,7 @@ NoteList.newNoteSeq = function () {
 };
 // 这里如果notes过多>100个将会很慢!!, 使用setTimeout来分解
 NoteList.renderNotesC = 0;
-NoteList.renderNotes = function(notes, forNewNote, isShared) {
+NoteList.renderNotes = function(notes, forNewNote) {
 	var renderNotesC = ++NoteList.renderNotesC;
 
 	this.clearSeqForNew();
@@ -75,7 +75,7 @@ NoteList.renderNotes = function(notes, forNewNote, isShared) {
 	var len = notes.length;
 	var c = Math.ceil(len/20);
 	
-	NoteList._renderNotes(notes, forNewNote, isShared, 1);
+	NoteList._renderNotes(notes, forNewNote, 1);
 	
 	for(var i = 1; i < c; ++i) {
 		setTimeout(
@@ -83,13 +83,13 @@ NoteList.renderNotes = function(notes, forNewNote, isShared) {
 				// 防止还没渲染完就点击另一个notebook了
 				return function() {
 					if(renderNotesC == NoteList.renderNotesC) {
-						NoteList._renderNotes(notes, forNewNote, isShared, i+1);
+						NoteList._renderNotes(notes, forNewNote, i+1);
 					}
 				}
 			})(i), i*2000);
 	}
 };
-NoteList._renderNotes = function(notes, forNewNote, isShared, tang) { // 第几趟
+NoteList._renderNotes = function(notes, forNewNote, tang) { // 第几趟
 	var len = notes.length;
 	for(var i = (tang-1)*20; i < len && i < tang*20; ++i) {
 		var note = notes[i];
@@ -97,20 +97,15 @@ NoteList._renderNotes = function(notes, forNewNote, isShared, tang) { // 第几�
 
 		// 笔记作者不是我, 则是共享过来的
 		var classes = 'item-my';
-		Note.nowIsInShared = false;
-		if (isShared || note.UserId != UserInfo.UserId) {
-			classes = 'item-shared';
-			Note.nowIsInShared = true;
-		}
 		if(!forNewNote && i == 0) {
 			classes += " item-active";
 		}
 
 		var tmp;
 		if(note.ImgSrc) {
-			tmp = tt(NoteList.itemTpl, classes, i, note.NoteId, note.ImgSrc, note.Title, Notebook.getNotebookTitle(note.NotebookId), goNowToDatetime(note.UpdatedTime), note.Desc);
+			tmp = tt(NoteList.itemTpl, classes, i, note.NoteId, note.ImgSrc, note.Title, Cache.getNotebookTitleById(note.NotebookId), goNowToDatetime(note.UpdatedTime), note.Desc);
 		} else {
-			tmp = tt(NoteList.itemTplNoImg, classes, i, note.NoteId, note.Title, Notebook.getNotebookTitle(note.NotebookId), goNowToDatetime(note.UpdatedTime), note.Desc);
+			tmp = tt(NoteList.itemTplNoImg, classes, i, note.NoteId, note.Title, Cache.getNotebookTitleById(note.NotebookId), goNowToDatetime(note.UpdatedTime), note.Desc);
 		}
 		tmp = $(tmp);
 		if(!note.IsBlog) {
@@ -144,8 +139,6 @@ NoteList.initContextmenu = function() {
 	var noteListMenu = {
 		width: 180, 
 		items: [
-			{ text: getMsg("shareToFriends"), alias: 'shareToFriends', icon: "", faIcon: "fa-share-square-o", action: NoteList.listNoteShareUserInfo},
-			{ type: "splitLine" },
 			{ text: getMsg("publicAsBlog"), alias: 'set2Blog', faIcon: "fa-bold", action: NoteList.setNote2Blog },
 			{ text: getMsg("cancelPublic"), alias: 'unset2Blog', faIcon: "fa-undo", action: NoteList.unsetNote2Blog },
 			{ type: "splitLine" },
@@ -179,26 +172,22 @@ NoteList.initContextmenu = function() {
 
 		// 批量模式下不能分享, 导出pdf
 		if (NoteList.inBatch) {
-			items.push("shareToFriends");
 			items.push('exportPDF');
 
 			// 如果在trash下
 			if(Notebook.curActiveNotebookIsTrash()) {
-				items.push("shareStatus");
 				items.push("unset2Blog");
 				items.push("set2Blog");
 				items.push("copy");
 			}
 		} else {
-			var note = SharedData.getNote(noteId);
+			var note = Cache.getNote(noteId);
 			if(!note) {
 				return;
 			}
 
 			// 如果是trash, 什么都不能做
 			if(note.IsTrash || Notebook.curActiveNotebookIsTrash()) {
-				items.push("shareToFriends");
-				items.push("shareStatus");
 				items.push("unset2Blog");
 				items.push("set2Blog");
 				items.push("copy");
@@ -210,7 +199,7 @@ NoteList.initContextmenu = function() {
 				}
 
 				// 移动与复制不能是本notebook下
-				var notebookTitle = Notebook.getNotebookTitle(note.NotebookId);
+				var notebookTitle = Cache.getNotebookTitleById(note.NotebookId);
 				items.push("move." + notebookTitle);
 				items.push("copy." + notebookTitle);
 			}
@@ -241,7 +230,6 @@ NoteList.getContextNotebooks = function(notebooks) {
 		var notebook = notebooks[i];
 		var move = {text: notebook.Title, notebookId: notebook.NotebookId, action: NoteList.moveNote}
 		var copy = {text: notebook.Title, notebookId: notebook.NotebookId, action: NoteList.copyNote}
-		var copy2 = {text: notebook.Title, notebookId: notebook.NotebookId, action: Share.copySharedNote}
 		if(!isEmpty(notebook.Subs)) {
 			var mc = NoteList.getContextNotebooks(notebook.Subs);
 			move.items = mc[0];
@@ -259,12 +247,6 @@ NoteList.getContextNotebooks = function(notebooks) {
 		copys2.push(copy2);
 	}
 	return [moves, copys, copys2];
-};
-
-// 显示共享信息
-NoteList.listNoteShareUserInfo = function(target) {
-	var noteId = $(target).attr("noteId");
-	showDialogRemote("/share/listNoteShareUserInfo", {noteId: noteId});
 };
 
 NoteList.$itemList = $('#noteItemList');
@@ -298,7 +280,7 @@ NoteList._setBlog = function(target, isBlog) {
 				} else {
 					$t.removeClass('item-b');
 				}
-				SharedData.setNoteContent({NoteId: noteId, IsBlog: isBlog}); // 不清空NotesByNotebookId缓存
+				Cache.setNoteContent({NoteId: noteId, IsBlog: isBlog}); // 不清空NotesByNotebookId缓存
 			}
 		}
 	});
@@ -314,7 +296,7 @@ NoteList.exportPDF = function(target) {
 // 1. 先隐藏, 成功后再移除DOM
 // 2. ajax之 noteId
 // Share.deleteSharedNote调用
-NoteList.deleteNote = function(target, contextmenuItem, isShared) {
+NoteList.deleteNote = function(target, contextmenuItem) {
 	var me = NoteList;
 
 	var noteIds;
@@ -331,7 +313,7 @@ NoteList.deleteNote = function(target, contextmenuItem, isShared) {
 	// 如果删除的是已选中的, 赶紧设置curNoteId = null
 	if(noteIds.length == 1 && $(target).hasClass("item-active")) {
 		// 不保存
-		SharedData.clearCurNoteId();
+		Cache.clearCurNoteId();
 		// 清空信息
 		Note.clearNoteInfo();
 	}
@@ -347,7 +329,7 @@ NoteList.deleteNote = function(target, contextmenuItem, isShared) {
 	// 1
 	$actives.hide();
 	// 2
-	ajaxPost('/note/deleteNote', {noteIds: noteIds, isShared: isShared}, function(ret) {
+	ajaxPost('/note/deleteNote', {noteIds: noteIds}, function(ret) {
 		if(ret) {
 			NoteList.changeToNextSkipNotes(noteIds);
 			$actives.remove();
@@ -355,11 +337,11 @@ NoteList.deleteNote = function(target, contextmenuItem, isShared) {
 			// 删除缓存
 			for (var i = 0; i < noteIds.length; ++i) {
 				var noteId = noteIds[i];
-				var note = SharedData.getNote(noteId);
+				var note = Cache.getNote(noteId);
 				if (note) {
 					// 减少数量
 					Notebook.minusNotebookNumberNotes(note.NotebookId);
-					SharedData.deleteNote(noteId);
+					Cache.deleteNote(noteId);
 					NoteList.renderNotesAndFirstOneContent(note);
 				}
 			}
@@ -387,7 +369,7 @@ NoteList.moveNote = function(target, data) {
 	}
 
 	if (noteIds.length == 1) {
-		var note = SharedData.getNote(noteIds[0]);
+		var note = Cache.getNote(noteIds[0]);
 		if(!note.IsTrash && note.NotebookId == toNotebookId) {
 			return;
 		}
@@ -398,7 +380,7 @@ NoteList.moveNote = function(target, data) {
 
 			for (var i = 0; i < noteIds.length; ++i) {
 				var noteId = noteIds[i];
-				var note = SharedData.getNote(noteId);
+				var note = Cache.getNote(noteId);
 				if (note) {
 					// 修改笔记数量
 					if (note.NotebookId != toNotebookId) {
@@ -417,7 +399,7 @@ NoteList.moveNote = function(target, data) {
 					note.NotebookId = toNotebookId;
 					note.IsTrash = false;
 					note.UpdatedTime = new Date();
-					SharedData.setNoteContent(note);
+					Cache.setNoteContent(note);
 				}
 			}
 
@@ -436,7 +418,7 @@ NoteList.moveNote = function(target, data) {
 			// 在all下, 不要删除
 			else {
 				// 不移动, 那么要改变其notebook title
-				$actives.find(".note-notebook").html(Notebook.getNotebookTitle(toNotebookId));
+				$actives.find(".note-notebook").html(Cache.getNotebookTitleById(toNotebookId));
 
 				Note.changeNote($actives.eq(0).attr('noteId'));
 			}
@@ -449,7 +431,7 @@ NoteList.moveNote = function(target, data) {
 
 // 复制
 // data是自动传来的, 是contextmenu数据 
-NoteList.copyNote = function(target, data, isShared) {
+NoteList.copyNote = function(target, data) {
 	var me = Note;
 
 	var toNotebookId = data.notebookId;
@@ -480,11 +462,6 @@ NoteList.copyNote = function(target, data, isShared) {
 
 	var url = "/note/copyNote";
 	var data = {noteIds: needNoteIds, notebookId: toNotebookId};
-	if(isShared) {
-		url = "/note/copySharedNote";
-		var note = me.getNote(needNoteIds[0]);
-		data.fromUserId = note.UserId;
-	}
 
 	ajaxPost(url, data, function(ret) {
 		if(reIsOk(ret)) {
@@ -501,7 +478,7 @@ NoteList.copyNote = function(target, data, isShared) {
 					continue;
 				}
 				// 改变缓存, 添加之
-				SharedData.setNoteContent(note);
+				Cache.setNoteContent(note);
 
 				// 增加数量
 				Notebook.incrNotebookNumberNotes(toNotebookId)
@@ -514,7 +491,7 @@ NoteList.copyNote = function(target, data, isShared) {
 // 点击notebook时调用, 渲染第一个笔记
 NoteList.contentAjax = null;
 NoteList.contentAjaxSeq = 1;
-NoteList.changeNote = function(selectNoteId, isShare, needSaveChanged, callback) {
+NoteList.changeNote = function(selectNoteId, needSaveChanged, callback) {
 	if (!selectNoteId) {
 		return;
 	}
@@ -524,29 +501,13 @@ NoteList.changeNote = function(selectNoteId, isShare, needSaveChanged, callback)
 	Note.selectTarget(target);
 	
 	// 2. 设空, 防止在内容得到之前又发生保存
-	SharedData.clearCurNoteId();
+	Cache.clearCurNoteId();
 	
 	// 2 得到现在的
 	// ajax之
-	var cacheNote = SharedData.getNote(selectNoteId);
+	var cacheNote = Cache.getNote(selectNoteId);
 	if (!cacheNote) {
 		return;
-	}
-	
-	// 判断是否是共享notes
-	if(!isShare) {
-		if(cacheNote.Perm != undefined) {
-			isShare = true;
-		}
-	}
-	var hasPerm = !isShare || Share.hasUpdatePerm(selectNoteId); // 不是共享, 或者是共享但有权限
-	
-	// 有权限
-	if(hasPerm) {
-		Note.hideReadOnly();
-		Note.renderNote(cacheNote);
-	} else {
-		Note.renderNoteReadOnly(cacheNote);
 	}
 	
 	// 这里要切换编辑器
@@ -565,10 +526,10 @@ NoteList.changeNote = function(selectNoteId, isShare, needSaveChanged, callback)
 		if(seq2 != NoteList.contentAjaxSeq) {
 			return;
 		}
-		SharedData.setNoteContent(ret, false);
+		Cache.setNoteContent(ret, false);
 
 		// 把其它信息也带上
-		ret = SharedData.getNote(selectNoteId)
+		ret = Cache.getNote(selectNoteId)
 		Note.renderNoteContent(ret);
 		
 		Note.hideContentLoading();
@@ -583,10 +544,6 @@ NoteList.changeNote = function(selectNoteId, isShare, needSaveChanged, callback)
 
 	var url = "/note/getNoteContent";
 	var param = {noteId: selectNoteId};
-	if(isShare) {
-		url = "/share/getShareNoteContent";
-		param.sharedUserId = cacheNote.UserId // 谁的笔记
-	}
 	
 	Note.showContentLoading();
 	if(Note.contentAjax != null) {
@@ -925,7 +882,7 @@ NoteList.batch = {
 
 		me.$batchMask.on('contextmenu', function (e) {
 			e.preventDefault();
-			!Note.nowIsInShared ? NoteList.contextmenu.showMenu(e) : Share.contextmenu.showMenu(e);
+			NoteList.contextmenu.showMenu(e);
 		});
 
 		me.$batchMask.find('.batch-info .fa').click(function (e) {
@@ -937,7 +894,7 @@ NoteList.batch = {
 			e.stopPropagation();
 			// 所以
 			$(document).click();
-			!Note.nowIsInShared ? NoteList.contextmenu.showMenu(e) : Share.contextmenu.showMenu(e);
+			NoteList.contextmenu.showMenu(e);
 		});
 	},
 
@@ -947,7 +904,7 @@ NoteList.batch = {
 		// 选择了几个? 如果 >= 2则是批量操作
 		if (me.isInBatch()) {
 			// 清空当前笔记, 不让自动保存
-			SharedData.clearCurNoteId();
+			Cache.clearCurNoteId();
 			me.renderBatchNotes();
 			me.setInBatch();
 
@@ -969,7 +926,7 @@ NoteList.batch = {
 				// 手机端处理
 				Mobile.changeNote(noteId);
 				// 当前的和所选的是一个, 不改变
-				if(SharedData.curNoteId != noteId) {
+				if(Cache.curNoteId != noteId) {
 					// 不用重定向到notebook
 					Note.changeNoteForPjax(noteId, true, false);
 				}
@@ -1044,7 +1001,7 @@ NoteList.batch = {
 		if (me._notes[noteId]) {
 			return;
 		}
-		var note = SharedData.getCurNote(noteId);
+		var note = Cache.getCurNote(noteId);
 		var title = note.Title || getMsg('unTitled');
 		var desc = note.Desc || '...';
 		var $note = $('<div class="batch-note"><div class="title">' + title + '</div><div class="content">' + desc + '</div></div>');
@@ -1129,7 +1086,7 @@ $(function() {
 
 		// 得到ID
 		var noteId = $(this).parent().attr('noteId');
-		var note = SharedData.getCurNote(noteId);
+		var note = Cache.getCurNote(noteId);
 		if (note) {
 			window.open(Note.getPostUrl(note));
 		}

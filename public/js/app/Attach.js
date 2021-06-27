@@ -91,7 +91,7 @@ var Attach = {
 	},
 	renderNoteAttachNum: function(noteId, needHide) {
 		var self = this;
-		var note = SharedData.getNote(noteId);
+		var note = Cache.getNote(noteId);
 		if(note.AttachNum) {
 			self.attachNumO.html("(" + note.AttachNum + ")").show();
 			self.downloadAllBtnO.show();
