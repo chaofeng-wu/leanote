@@ -8,24 +8,6 @@
 
 Note.isReadOnly = false;
 
-Note.interval = ""; // 定时器
-Note.intervalTime = 10 * 1000; // 10s
-Note.startInterval = function() {
-	clearInterval(Note.interval);
-	Note.interval = setInterval(function() {
-		log("自动保存开始...");
-		Note.curChangedSaveIt();
-	}, Note.intervalTime); // 600s, 10mins
-};
-// 停止, 当切换note时
-// 但过5000后自动启动
-Note.stopInterval = function() {
-	clearInterval(Note.interval);
-	setTimeout(function() {
-		Note.startInterval();
-	}, Note.intervalTime);
-};
-
 // 当前的note是否改变过了?
 // 返回已改变的信息
 Note.curHasChanged = function(force, isRefreshOrCtrls) {
@@ -216,7 +198,7 @@ Note.saveChange = function(hasChanged, callback){
 	
 	me.saveInProcess[hasChanged.NoteId] = true;
 	
-	ajaxPost("/note/updateNoteOrContent", hasChanged, function(ret) {
+	Net.ajaxPost("/note/updateNoteOrContent", hasChanged, function(ret) {
 		me.saveInProcess[hasChanged.NoteId] = false;
 		if(hasChanged.IsNew) {
 			// 缓存之, 后台得到其它信息
@@ -468,7 +450,7 @@ Note.newNote = function(notebookId, fromUserId, isMarkdown) {
 	// 防止从共享read only跳到添加
 	Note.hideReadOnly();
 
-	Note.stopInterval();
+	Timer.stopInterval();
 	// 保存当前的笔记
 	Note.curChangedSaveIt();
 
@@ -930,4 +912,4 @@ $(function() {
 });
 
 // 定时器启动
-Note.startInterval();
+Timer.startInterval();

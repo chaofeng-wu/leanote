@@ -270,7 +270,7 @@ NoteList._setBlog = function(target, isBlog) {
 	else {
 		noteIds = [$(target).attr("noteId")];
 	}
-	ajaxPost("/note/setNote2Blog", {noteIds: noteIds, isBlog: isBlog}, function(ret) {
+	Net.ajaxPost("/note/setNote2Blog", {noteIds: noteIds, isBlog: isBlog}, function(ret) {
 		if(ret) {
 			for (var i = 0; i < noteIds.length; ++i) {
 				var noteId = noteIds[i];
@@ -329,7 +329,7 @@ NoteList.deleteNote = function(target, contextmenuItem) {
 	// 1
 	$actives.hide();
 	// 2
-	ajaxPost('/note/deleteNote', {noteIds: noteIds}, function(ret) {
+	Net.ajaxPost('/note/deleteNote', {noteIds: noteIds}, function(ret) {
 		if(ret) {
 			NoteList.changeToNextSkipNotes(noteIds);
 			$actives.remove();
@@ -375,7 +375,7 @@ NoteList.moveNote = function(target, data) {
 		}
 	}
 	
-	ajaxPost("/note/moveNote", {noteIds: noteIds, notebookId: toNotebookId}, function(ret) {
+	Net.ajaxPost("/note/moveNote", {noteIds: noteIds, notebookId: toNotebookId}, function(ret) {
 		if(ret) {
 
 			for (var i = 0; i < noteIds.length; ++i) {
@@ -463,7 +463,7 @@ NoteList.copyNote = function(target, data) {
 	var url = "/note/copyNote";
 	var data = {noteIds: needNoteIds, notebookId: toNotebookId};
 
-	ajaxPost(url, data, function(ret) {
+	Net.ajaxPost(url, data, function(ret) {
 		if(reIsOk(ret)) {
 			var notes = ret.Item;
 			if (isEmpty(notes)) {
@@ -549,7 +549,7 @@ NoteList.changeNote = function(selectNoteId, needSaveChanged, callback) {
 	if(Note.contentAjax != null) {
 		Note.contentAjax.abort();
 	}
-	Note.contentAjax = ajaxGet(url, param, (function (seq2) {
+	Note.contentAjax = Net.ajaxGet(url, param, (function (seq2) {
 		return function (ret) {
 			// 因为之前Content内的IsBlog和Note的IsBlog不同步, 所以去掉Content中的IsBlog
 			delete ret['IsBlog'];

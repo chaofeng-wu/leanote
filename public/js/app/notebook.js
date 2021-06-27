@@ -106,7 +106,7 @@ Notebook.getTreeSetting = function(isSearch){
 			}
 		}
 		
-		ajaxPost("/notebook/dragNotebooks", {data: JSON.stringify(ajaxData)});
+		Net.ajaxPost("/notebook/dragNotebooks", {data: JSON.stringify(ajaxData)});
 		
 		// 这里慢!
 		setTimeout(function() {
@@ -455,7 +455,7 @@ Notebook.changeNotebook = function(notebookId, callback) {
 	me.showNoteAndEditorLoading();
 	me.changeNotebookSeq++;
 	(function(seq) {
-		ajaxGet(url, param, function(cacheNotes) { 
+		Net.ajaxGet(url, param, function(cacheNotes) { 
 			// 后面点击过快, 之前的结果不要了
 			if(seq != me.changeNotebookSeq) {
 				log("notebook changed too fast!");
@@ -504,7 +504,7 @@ Notebook.changeNotebookForNewNote = function(notebookId) {
 		
 	// 2 得到笔记本
 	// 这里可以缓存起来, note按notebookId缓存
-	ajaxGet(url, param, function(ret) {
+	Net.ajaxGet(url, param, function(ret) {
 		// note 导航
 		NoteList.renderNotes(ret, true);
 	});
@@ -543,7 +543,7 @@ Notebook.setNotebook2Blog = function(target) {
 			}
 		});
 	}
-	ajaxPost("/notebook/setNotebook2Blog", {notebookId: notebookId, isBlog: isBlog}, function(ret) {
+	Net.ajaxPost("/notebook/setNotebook2Blog", {notebookId: notebookId, isBlog: isBlog}, function(ret) {
 		if(ret) {
 			// 这里要设置notebook下的note的blog状态
 			Note.setAllNoteBlogStatus(notebookId, isBlog);
@@ -567,7 +567,7 @@ Notebook.updateNotebookTitle = function(target) {
 }
 Notebook.doUpdateNotebookTitle = function(notebookId, newTitle) {
 	var self = Notebook;
-	ajaxPost("/notebook/updateNotebookTitle", {notebookId: notebookId, title: newTitle}, function(ret) {
+	Net.ajaxPost("/notebook/updateNotebookTitle", {notebookId: notebookId, title: newTitle}, function(ret) {
 		// 修改缓存
 		Cache.notebooksDict[notebookId].Title = newTitle;
 		// 改变nav
@@ -600,7 +600,7 @@ Notebook.addNotebook = function() {
 // rename 调用
 Notebook.doAddNotebook = function(notebookId, title, parentNotebookId) {
 	var self = Notebook;
-	ajaxPost("/notebook/addNotebook", {notebookId: notebookId, title: title, parentNotebookId: parentNotebookId}, function(ret) {
+	Net.ajaxPost("/notebook/addNotebook", {notebookId: notebookId, title: title, parentNotebookId: parentNotebookId}, function(ret) {
 		if(ret.NotebookId) {
 			Cache.notebooksDict[ret.NotebookId] = ret;
 			var notebook = self.tree.getNodeByTId(notebookId);
@@ -640,7 +640,7 @@ Notebook.deleteNotebook = function(target) {
 		return;
 	}
 	
-	ajaxGet("/notebook/deleteNotebook", {notebookId: notebookId}, function(ret) {
+	Net.ajaxGet("/notebook/deleteNotebook", {notebookId: notebookId}, function(ret) {
 		if(ret.Ok) {
 			/*
 			$(target).parent().remove();

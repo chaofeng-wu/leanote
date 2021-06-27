@@ -156,105 +156,8 @@ function formSerializeDataToJson(formSerializeData) {
 	return $.extend(datas, arrObj);
 }
 
-// ajax请求返回结果后的操作
-// 用于ajaxGet(), ajaxPost()
-function _ajaxCallback(ret, successFunc, failureFunc) {
-	// 总会执行
-	if(ret === true || ret == "true" || typeof ret == "object") {
-		// 是否是NOTELOGIN
-		if(ret && typeof ret == "object") {
-			if(ret.Msg == "NOTLOGIN") {
-				alert(getMsg("Please sign in firstly!"));
-				return;
-			}
-		}
-		if(typeof successFunc == "function") {
-			successFunc(ret);
-		}
-	} else {
-		if(typeof failureFunc == "function") {
-			failureFunc(ret);
-		} else {
-			alert("error!")
-		}
-	}
-}
-function _ajax(type, url, param, successFunc, failureFunc, async) {
-	// log("-------------------ajax:");
-	// log(url);
-	// log(param);
-	if(typeof async == "undefined") {
-		async = true;
-	} else {
-		async = false;
-	}
-	return $.ajax({
-		type: type,
-		url: url,
-		data: param,
-		async: async, // 是否异步
-		success: function(ret) {
-			_ajaxCallback(ret, successFunc, failureFunc);
-		},
-		error: function(ret) {
-			_ajaxCallback(ret, successFunc, failureFunc);
-		}
-	});
-}
 
-/**
- * 发送ajax get请求
- * @param url
- * @param param
- * @param successFunc
- * @param failureFunc
- * @param hasProgress
- * @param async 是否异步
- * @returns
- */
-function ajaxGet(url, param, successFunc, failureFunc, async) {
-	return _ajax("GET", url, param, successFunc, failureFunc, async);
-}
 
-/**
- * 发送post请求
- * @param url
- * @param param
- * @param successFunc
- * @param failureFunc
- * @param hasProgress
- * @param async 是否异步, 默认为true
- * @returns
- */
-function ajaxPost(url, param, successFunc, failureFunc, async) {
-	_ajax("POST", url, param, successFunc, failureFunc, async);
-}
-function ajaxPostJson(url, param, successFunc, failureFunc, async) {
-	// log("-------------------ajaxPostJson:");
-	// log(url);
-	// log(param);
-	
-	// 默认是异步的
-	if(typeof async == "undefined") {
-		async = true;
-	} else {
-		async = false;
-	}
-	$.ajax({
-	    url : url,
-	    type : "POST",
-	    contentType: "application/json; charset=utf-8",
-	    datatype: "json",
-	    async: async,
-	    data : JSON.stringify(param),
-	    success : function(ret, stats) {
-			_ajaxCallback(ret, successFunc, failureFunc);
-	    },
-		error: function(ret) {
-			_ajaxCallback(ret, successFunc, failureFunc);
-		}
-	});
-}
 
 function findParents(target, selector) {
 	if($(target).is(selector)) {
@@ -270,14 +173,7 @@ function findParents(target, selector) {
 	return null;
 }
 
-/*
-ajaxPostJson(
-	"http://localhost:9000/notebook/index?i=100&name=life", 
-	{Title: "you can",  UserId:"52a9e409f4ea49d6576fdbca", Subs:[{title: "xxxxx", Seq:11}, {title:"life..."}]}, 
-	function(e) {
-		log(e);
-	});
-*/
+
 
 function getVendorPrefix() {
   // 使用body是为了避免在还需要传入元素
@@ -403,83 +299,7 @@ function isAceError(val) {
 	return val.indexOf('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX') != -1;
 }
 
-// 有tinymce得到的content有<html>包围
-// 总会出现<p>&nbsp;<br></p>, 原因, setContent('<p><br data-mce-bogus="1" /></p>') 会设置成 <p> <br></p>
-// 所以, 要在getContent时, 当是<p><br data-mce-bogus="1"></p>, 返回 <p><br/></p>
-function getEditorContent(isMarkdown) {
-	var content = _getEditorContent(isMarkdown);
-	if (content === '<p><br data-mce-bogus="1"></p>') {
-		return '<p><br></p>';
-	}
-	return content;
-}
-function _getEditorContent(isMarkdown) {
-	if(!isMarkdown) {
-		var editor = tinymce.activeEditor;
-		if(editor) {
-			var content = $(editor.getBody()).clone();
-			// 删除toggle raw 
-			content.find('.toggle-raw').remove();
 
-			// single页面没有LeaAce
-			if(window.LeaAce && LeaAce.getAce) {
-				// 替换掉ace editor
-				var pres = content.find('pre');
-				for(var i = 0 ; i < pres.length; ++i) {
-					var pre = pres.eq(i);
-					var id = pre.attr('id');
-					var aceEditor = LeaAce.getAce(id);
-					if(aceEditor) {
-						var val = aceEditor.getValue();
-						// 表示有错
-						if(isAceError(val)) {
-							val = pre.html();
-						}
-						val = val.replace(/</g, '&lt').replace(/>/g, '&gt');
-						pre.removeAttr('style', '').removeAttr('contenteditable').removeClass('ace_editor');
-						pre.html(val);
-					}
-				}
-			}
-			
-			// 去掉恶心的花瓣注入
-			// <pinit></pinit>
-			// 把最后的<script>..</script>全去掉
-			content.find("pinit").remove();
-			content.find(".thunderpin").remove();
-			content.find(".pin").parent().remove();
-			content = $(content).html();
-			if(content) {
-				while(true) {
-					var lastEndScriptPos = content.lastIndexOf("</script>");
-					if (lastEndScriptPos == -1) {
-						return content;
-					}
-					var length = content.length;
-					// 证明</script>在最后, 去除之
-					if(length - 9 == lastEndScriptPos) {
-						var lastScriptPos = content.lastIndexOf("<script ");
-						if(lastScriptPos == -1) {
-							lastScriptPos = content.lastIndexOf("<script>");
-						}
-						if(lastScriptPos != -1) {
-							content = content.substring(0, lastScriptPos);
-						} else {
-							return content;
-						}
-					} else {
-						// 不在最后, 返回
-						return content;
-					}
-				}
-			}
-			return content;
-		}
-	} else {
-		// return [$("#wmd-input").val(), $("#wmd-preview").html()]
-		return [MD.getContent(), '<div>' + $("#preview-contents").html() + '</div>']
-	}
-}
 
 // 禁用编辑
 LEA.editorStatus = true;
@@ -735,30 +555,7 @@ function hideAlert(id, timeout) {
 	}
 }
 
-//-------------------
-// for leanote ajax
 
-// post
-// return {Ok, Msg, Data}
-// btnId 是按钮包括#
-function post(url, param, func, btnId) {
-	var btnPreText;
-	if(btnId) {
-		$(btnId).button("loading"); // html("正在处理").addClass("disabled");
-	}
-	ajaxPost(url, param, function(ret) {
-		if(btnId) {
-			$(btnId).button("reset");
-		}
-		if (typeof ret == "object") {
-			if(typeof func == "function") {
-				func(ret);
-			}
-		} else {
-			alert("leanote出现了错误!");
-		}
-	});
-}
 
 // 是否是正确的email
 function isEmail(email) {
