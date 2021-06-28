@@ -89,24 +89,24 @@ define('history', [], function() {
             $tpl.find('.back').click(function() {
                 if(confirm(getMsg("confirmBackup"))) {
                     // 保存当前版本
-                    Note.curChangedSaveIt(true);
+                    Editor.saveNoteChange(true);
 
                     // 设置之
-                    note = Note.cache[Note.curNoteId];
+                    note = Cache.getCurNote();
                     setEditorContent(me.list[me.curIndex].Content, note.IsMarkdown);
 
                     $tpl.modal('hide');
                     // 保存
-                    Note.curChangedSaveIt(true);
+                    Editor.saveNoteChange(true);
                 }
             });
         },
 
         getHistories: function () {
             var me = this;
-            var note = Note.getCurNote();
+            var note = Cache.getCurNote();
             me.note = note;
-            ajaxGet("/noteContentHistory/listHistories", {noteId: Note.curNoteId}, function(re) {
+            ajaxGet("/noteContentHistory/listHistories", {noteId: Cache.curNoteId}, function(re) {
                 if(!isArray(re)) {
                     alert(getMsg('noHistories'));
                     return;

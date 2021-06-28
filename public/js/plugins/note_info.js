@@ -87,7 +87,7 @@ define('note_info', [], function() {
         render: function (note) {
             var me = this;
             if (!note) {
-                note = Note.getCurNote();
+                note = Cache.getCurNote();
             }
             if (!note) {
                 return;

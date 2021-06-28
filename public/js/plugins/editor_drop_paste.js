@@ -119,7 +119,7 @@ define('editor_drop_paste', ['fileupload'], function() {
 		}
 		if(fileId) {
 			// 得到fileId, 如果这个笔记不是我的, 那么肯定是协作的笔记, 那么需要将图片copy给原note owner
-			var curNote = Note.getCurNote();
+			var curNote = Cache.getCurNote();
 			if(curNote && curNote.UserId != UserInfo.UserId) {
 				(function(data) {
 					ajaxPost("/file/copyImage", {userId: UserInfo.UserId, fileId: fileId, toUserId: curNote.UserId}, function(re) {
@@ -294,7 +294,7 @@ define('editor_drop_paste', ['fileupload'], function() {
 	        url: "/file/pasteImage",
 	        paramName: 'file',
 	        formData: function(form) {
-	        	return [{name: 'from', value: 'pasteImage'}, {name: 'noteId', value: Note.curNoteId}]
+	        	return [{name: 'from', value: 'pasteImage'}, {name: 'noteId', value: Cache.curNoteId}]
 	        },
 	        /*
 	        paste: function(e, data) {
@@ -319,7 +319,7 @@ define('editor_drop_paste', ['fileupload'], function() {
 	        	// console.log('nono');
 	        	lastTime = now;
 
-	        	var note = Note.getCurNote();
+	        	var note = Cache.getCurNote();
 	        	curNote = note;
 	        	if(!note || note.IsNew) {
 	        		// alert(getMsg("Please save note firstly!"));

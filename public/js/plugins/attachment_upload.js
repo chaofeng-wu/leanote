@@ -61,12 +61,12 @@ define('attachment_upload', ['fileupload'], function(){
 	        // This element will accept file drag/drop uploading
 	        dropZone: $('#dropAttach'),
 	        formData: function(form) {
-	        	return [{name: 'noteId', value: Note.curNoteId}] // 传递笔记本过去
+	        	return [{name: 'noteId', value: Cache.curNoteId}] // 传递笔记本过去
 	        },
 	        // This function is called when a file is added to the queue;
 	        // either via the browse button, or via drag/drop:
 	        add: function(e, data) {
-	        	var note = Note.getCurNote();
+	        	var note = Cache.getCurNote();
 	        	if(!note || note.IsNew) {
 	        		alert("This note hasn't saved, please save it firstly!")
 	        		return;
