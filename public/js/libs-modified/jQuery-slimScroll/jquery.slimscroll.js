@@ -323,8 +323,7 @@
           }
 
           // stop window scroll
-          if (e.preventDefault && !releaseScroll) { e.preventDefault(); }
-          if (!releaseScroll) { e.returnValue = false; }
+          if (e.preventDefault && !releaseScroll) { e.target.blur(); }
         }
 
         function scrollContent(y, isWheel, isJump, onlyScrollBar)
@@ -349,6 +348,7 @@
 
             // scroll the scrollbar
             bar.css({ top: delta + 'px' });
+            document.onmousemove = function (e) { e.returnValue = false };
           }
 
           // calculate actual scroll amount

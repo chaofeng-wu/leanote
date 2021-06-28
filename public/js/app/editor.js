@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-27 17:47:48
- * @LastEditTime: 2021-06-27 18:37:30
+ * @LastEditTime: 2021-06-28 17:03:00
  * @FilePath: /leanote/public/js/app/editor.js
  */
 Editor = {};
@@ -84,28 +84,359 @@ function _getEditorContent(isMarkdown) {
 	}
 }
 
-Editor.saveNoteChange = function(){
-    var curNote = Cache.getCurNote();
-    var content = getEditorContent(curNote.isMarkdown);
-    if (curNote.Content === content) {
-        return;
-    }
-    curNote.Content = content;
-    //先将content的改变写入到本地缓存
-    Cache.setNoteContent(content);
-    //先将content的改变写入到server
-    Editor.syncContentToServer(content);
+// 当前的note是否改变过了?
+// 返回已改变的信息
+// 这种改变主要包括content，tag，title
+Editor.isNoteChanged = function(force, isRefreshOrCtrls) {
+
+	var curNote = Cache.getCurNote(); 
+	if (!curNote) {
+		return false;
+	}
+
+	var tmpNote = {
+		IsChanged: false, // 总的是否有改变
+		IsNew: curNote.IsNew, // 是否是新添加的
+		IsMarkdown: curNote.IsMarkdown, // 是否是markdown笔记
+		FromUserId: curNote.FromUserId, // 是否是共享新建的
+		NoteId: curNote.NoteId,
+		NotebookId: curNote.NotebookId
+	};
+
+	// 收集当前信息, 与cache比对
+	var title = $('#noteTitle').val();
+	var tags = Tag.getTags();
+
+	if (curNote.IsNew) {
+		tmpNote.IsChanged = true;
+		tmpNote.title = title;
+	}
+
+	if(curNote.Title != title) {
+		tmpNote.IsChanged = true; // 本页使用用小写
+		tmpNote.Title = title; // 要传到后台的用大写
+	}
+	
+	if(!arrayEqual(curNote.Tags, tags)) {
+		tmpNote.IsChanged = true;
+		tmpNote.Tags = tags.join(","); // 为什么? 因为空数组不会传到后台
+	}
+
+	// 是否需要检查内容呢?
+
+	var needCheckContent = false;
+	if (curNote.IsNew || force || !Note.readOnly) {
+		needCheckContent = true;
+	}
+
+	// 标题, 标签, 内容都没改变
+	if (!tmpNote.IsChanged && !needCheckContent) {
+		return false;
+	}
+
+	// 如果内容没改变
+	if (!needCheckContent) {
+		return tmpNote;
+	}
+
+	//===========
+	// 内容的比较
+
+	// 如果是markdown返回[content, preview]
+	var contents = getEditorContent(curNote.IsMarkdown);
+	var content, preview;
+	if (isArray(contents)) {
+		content = contents[0];
+		preview = contents[1];
+		// preview可能没来得到及解析
+		if (content && previewIsEmpty(preview) && Converter) {
+			preview = Converter.makeHtml(content);
+		}
+		if(!content) {
+			preview = "";
+		}
+		curNote.Preview = preview; // 仅仅缓存在前台
+	} else {
+		content = contents;
+	}
+
+	// 如果是插件, 且没有改动任何地方
+	if ( tmpNote.Src && !tmpNote.Tags && (!content || content == '<p><br></p>')) {
+		// 如果不是手动ctrl+s, 则不保存
+		if (!(isRefreshOrCtrls && isRefreshOrCtrls.ctrls)) {
+			return false;
+		}
+	}
+	
+	if (tmpNote.Content != content) {
+		tmpNote.IsChanged = true;
+		tmpNote.Content = content;
+		
+		// 从html中得到...
+		var c = preview || content;
+		
+		// 不是博客或没有自定义设置的
+		if(!tmpNote.HasSelfDefined || !tmpNote.IsBlog) {
+			tmpNote.Desc = Cache.genDescFromContent(c);
+			tmpNote.ImgSrc = Cache.getImgSrcFromContent(c);
+			tmpNote.Abstract = Cache.getImgSrcFromContent(c);
+		}
+	} else {
+		log("text相同");
+	}
+
+	if (tmpNote.IsChanged) {
+		return tmpNote;
+	}
+	return false;
+};
+
+Editor.getCurEditorContent = function(){
+	var cacheNote = Cache.getCurNote(); 
+	var contents = getEditorContent(cacheNote.IsMarkdown);
+	return contents[0];
 }
 
-Editor.syncContentToServer = function(content){
-    var curNote = Cache.getCurNote();
-    var updatedNote = {
-        UserId: curNote.UserId,
-        NoteId: curNote.NoteId, 
-        Content: content
-    };
+// 如果当前的改变了, 就保存它
+// 以后要定时调用
+// force , 默认是true, 表强校验内容
+// 定时保存传false
+Editor.saveNoteChange = function(force, callback, isRefreshOrCtrls) {
+	// 如果当前没有笔记, 不保存
+	// 或者是共享的只读笔记
+	if(!Cache.curNoteId || Note.isReadOnly) {
+		// log(!Note.curNoteId ? '无当前笔记' : '共享只读');
+		return;
+	}
+	var updatedNote;
+	try {
+		updatedNote = Editor.isNoteChanged(force, isRefreshOrCtrls);
+	} catch(e) {
+		// console.error('获取当前改变的笔记错误!');
+		callback && callback(false);
+		return;
+	}
+	
+	if(updatedNote && updatedNote.IsChanged) {
 
-    Net.ajaxPost("/note/updateNoteOrContent", updatedNote, function(ret) {
+		Editor.saveChangeToServer(updatedNote, callback);
+
+		return updatedNote;
+	}
+	else {
+		log('无需保存');
+	}
+
+	return false;
+};
+
+Editor.saveChangeToServer = function(updatedNote, callback){
+	log('需要保存...');
+	// 把已改变的渲染到左边 item-list
+	NoteList.renderChangedNote(updatedNote);
+	delete updatedNote.IsChanged;
+	
+	// 保存之
+	showMsg(getMsg("saving"));
+	
+	Net.ajaxPost("/note/updateNoteOrContent", updatedNote, function(ret) {
+
+		if(updatedNote.IsNew) {
+			// 缓存之, 后台得到其它信息
+			ret.IsNew = false;
+			Cache.setNoteContent(ret);
+
+			// 新建笔记也要change history
+			Net.Pjax.changeNote(ret);
+		}
+		callback && callback();
 		showMsg(getMsg("saveSuccess"), 1000);
 	});
+	
+	if(updatedNote['Tags'] != undefined && typeof updatedNote['Tags'] == 'string') {
+		updatedNote['Tags'] = updatedNote['Tags'].split(',');
+	}
+	// 先缓存, 把markdown的preview也缓存起来
+	Cache.setNoteContent(updatedNote);
+	// 设置更新时间
+	Cache.setNoteContent({"NoteId": updatedNote.NoteId, "UpdatedTime": (new Date()).format("yyyy-MM-ddThh:mm:ss.S")}, false);
 }
+
+// 保存mindmap中的更改
+Editor.saveChangeInMindmap = function(markdown){
+	var cacheNote = Cache.getCurNote(); 
+	if (!cacheNote) {
+		return;
+	}
+
+	if (cacheNote.Content === markdown) {
+		return;
+	}
+
+	cacheNote.Content = markdown;
+	// cacheNote.preview = Converter.makeHtml(markdown);
+	setEditorContent(cacheNote.Content, cacheNote.IsMarkdown, cacheNote.Preview);
+
+	var hasChanged = {
+		hasChanged: true, // 总的是否有改变
+		IsNew: cacheNote.IsNew, // 是否是新添加的
+		IsMarkdown: cacheNote.IsMarkdown, // 是否是markdown笔记
+		FromUserId: cacheNote.FromUserId, // 是否是共享新建的
+		NoteId: cacheNote.NoteId,
+		NotebookId: cacheNote.NotebookId,
+		Content: markdown
+	};
+	Editor.saveChangeToServer(hasChanged);
+}
+
+//-----------
+// 初始化编辑器
+Editor.initEditor = function() {
+	// editor
+	// toolbar 下拉扩展, 也要resizeEditor
+	var mceToobarEverHeight = 0;
+	$("#moreBtn").click(function() {
+		saveBookmark();
+		var $editor = $('#editor');
+		if($editor.hasClass('all-tool')) {
+			$editor.removeClass('all-tool');
+		} else {
+			$editor.addClass('all-tool');
+		}
+
+		restoreBookmark();
+	});
+
+	// 初始化编辑器
+	tinymce.init({
+		inline: true,
+		theme: 'leanote',
+		valid_children: "+pre[div|#text|p|span|textarea|i|b|strong]", // ace
+		/*
+		protect: [
+	        /\<\/?(if|endif)\>/g, // Protect <if> & </endif>
+	        /\<xsl\:[^>]+\>/g, // Protect <xsl:...>
+	        // /<pre.*?>.*?<\/pre>/g, // Protect <pre ></pre>
+	        // /<p.*?>.*?<\/p>/g, // Protect <pre ></pre>
+	        // /<\?php.*?\?>/g // Protect php code
+	    ],
+	    */
+		setup: function(ed) {
+			ed.on('keydown', function(e) {
+				// 如果是readony, 则不能做任何操作
+				var num = e.which ? e.which : e.keyCode;
+				// 如果是readony, 则不能做任何操作, 除了复制
+				if(Note.readOnly && !((e.ctrlKey || e.metaKey) && num == 67)) {
+					e.preventDefault();
+					return;
+				}
+
+				// 当输入的时候, 把当前raw删除掉
+				LeaAce.removeCurToggleRaw();
+			});
+			
+			// 为了把下拉菜单关闭
+			/*
+	        ed.on("click", function(e) {
+	          // $("body").trigger("click");
+	          // console.log(tinymce.activeEditor.selection.getNode());
+	        });
+	        */
+	        
+	        // electron下有问题, Ace剪切导致行数减少, #16
+			ed.on('cut', function(e) {
+				if($(e.target).hasClass('ace_text-input')) {
+					e.preventDefault();
+					return;
+				}
+			});
+		},
+		
+		// fix TinyMCE Removes site base url
+		// http://stackoverflow.com/questions/3360084/tinymce-removes-site-base-urls
+		convert_urls: false, // true会将url变成../api/
+		relative_urls: true,
+		remove_script_host:false,
+		
+		selector : "#editorContent",
+		
+		// content_css 不再需要
+		// content_css : [LEA.sPath + "/css/editor/editor.css"], // .concat(em.getWritingCss()),
+		skin : "custom",
+		language: LEA.locale, // 语言
+		plugins : [
+				"autolink link leaui_image leaui_mindmap lists hr", "paste",
+				"searchreplace leanote_nav leanote_code tabfocus",
+				"table textcolor", "leaui_drawio" ], // nonbreaking directionality charmap
+		toolbar1 : "formatselect | forecolor backcolor | bold italic underline strikethrough | leaui_image leaui_mindmap leaui_drawio | leanote_code leanote_inline_code | bullist numlist | alignleft aligncenter alignright alignjustify",
+		toolbar2 : "outdent indent blockquote | link unlink | table | hr removeformat | subscript superscript | searchreplace | pastetext | leanote_ace_pre | fontselect fontsizeselect",
+
+		// 使用tab键: http://www.tinymce.com/wiki.php/Plugin3x:nonbreaking
+		// http://stackoverflow.com/questions/13543220/tiny-mce-how-to-allow-people-to-indent
+		// nonbreaking_force_tab : true,
+		
+		menubar : false,
+		toolbar_items_size : 'small',
+		statusbar : false,
+		url_converter: false,
+		font_formats : "Arial=arial,helvetica,sans-serif;"
+				+ "Arial Black=arial black,avant garde;"
+				+ "Times New Roman=times new roman,times;"
+				+ "Courier New=courier new,courier;"
+				+ "Tahoma=tahoma,arial,helvetica,sans-serif;"
+				+ "Verdana=verdana,geneva;" + "宋体=SimSun;"
+				+ "新宋体=NSimSun;" + "黑体=SimHei;"
+				+ "微软雅黑=Microsoft YaHei",
+		block_formats : "Header 1=h1;Header 2=h2;Header 3=h3;Header 4=h4;Paragraph=p",
+		/*
+		codemirror: {
+		    indentOnInit: true, // Whether or not to indent code on init. 
+		    path: 'CodeMirror', // Path to CodeMirror distribution
+		    config: {           // CodeMirror config object
+		       //mode: 'application/x-httpd-php',
+		       lineNumbers: true
+		    },
+		    jsFiles: [          // Additional JS files to load
+		       // 'mode/clike/clike.js',
+		       //'mode/php/php.js'
+		    ]
+		  },
+		  */
+		  // This option specifies whether data:url images (inline images) should be removed or not from the pasted contents. 
+		  // Setting this to "true" will allow the pasted images, and setting this to "false" will disallow pasted images.  
+		  // For example, Firefox enables you to paste images directly into any contentEditable field. This is normally not something people want, so this option is "false" by default.
+		  paste_data_images: true
+	});
+	
+	// 刷新时保存 参考autosave插件
+	window.onbeforeunload = function(e) {
+		if (LEA.isLogout) {
+			return;
+		}
+    	Editor.saveNoteChange(true, null, {refresh: true});
+	}
+
+	// 全局快捷键
+	// ctrl + s 保存
+	// ctrl+e 切换只读与可写
+	$('body').on('keydown', function (e) {
+		var num = e.which ? e.which : e.keyCode;
+		var ctrlOrMetaKey = e.ctrlKey || e.metaKey;
+	    if(ctrlOrMetaKey) {
+			// 保存
+		    if (num == 83 ) { // ctrl + s or command + s
+		    	Editor.saveNoteChange(true, null, {ctrls: true});
+		    	e.preventDefault();
+		    	return false;
+		    }
+		    else if (num == 69) { // e
+		    	Note.toggleWriteableAndReadOnly();
+		    	e.preventDefault();
+		    	return false;
+		    }
+	    }
+	});
+};
+
+// 初始化编辑器
+Editor.initEditor();

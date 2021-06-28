@@ -11,7 +11,7 @@ var Attach = {
 		// 显示attachs
 		$("#showAttach").click(function() {
 			// self._bookmark = tinymce.activeEditor.selection.getBookmark();
-			self.renderAttachs(Note.curNoteId);
+			self.renderAttachs(Cache.curNoteId);
 		});
 		// 防止点击隐藏
 		self.attachListO.click(function(e) {
@@ -42,7 +42,7 @@ var Attach = {
 		});
 		// 下载全部
 		self.downloadAllBtnO.click(function() {
-			Note.download("/attach/downloadAll", {noteId: Note.curNoteId});
+			Note.download("/attach/downloadAll", {noteId: Cache.curNoteId});
 		});
 
 		// make link
@@ -139,7 +139,7 @@ var Attach = {
 		self.attachListO.html(html);
 		
 		// 设置数量
-		var note = Note.getCurNote();
+		var note = Cache.getCurNote();
 		if(note) {
 			note.AttachNum = attachNum;
 			self.renderNoteAttachNum(note.NoteId, false);
@@ -159,7 +159,7 @@ var Attach = {
 		// 显示loading
 		self.attachListO.html('<li class="loading"><img src="/images/loading-24.gif"/></li>');
 		// ajax获取noteAttachs
-		ajaxGet("/attach/getAttachs", {noteId: noteId}, function(ret) {
+		Net.ajaxGet("/attach/getAttachs", {noteId: noteId}, function(ret) {
 			var list = [];
 			if(ret.Ok) {
 				list = ret.List;
@@ -184,7 +184,7 @@ var Attach = {
 	// 删除
 	deleteAttach: function(attachId) {
 		var self = this;
-		var noteId = Note.curNoteId;
+		var noteId = Cache.curNoteId;
 		var attachs = self.loadedNoteAttachs[noteId];
 		for(var i = 0; i < attachs.length; ++i) {
 			if(attachs[i].AttachId == attachId) {

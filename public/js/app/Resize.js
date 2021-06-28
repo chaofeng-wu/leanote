@@ -186,3 +186,7 @@ var Resize = {
 		}
 	}
 }
+
+Resize.init();
+Resize.set3ColumnsWidth(UserInfo.NotebookWidth, UserInfo.NoteListWidth);
+Resize.setMdColumnWidth(UserInfo.MdEditorWidth);

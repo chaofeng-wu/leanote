@@ -140,5 +140,6 @@ editorMode.prototype.getWritingCss = function() {
 	}
 	return [];
 }
-var em = new editorMode();
-LEA.em = em;
+var editorMode = new editorMode();
+LEA.editorMode = editorMode;
+editorMode.init();

@@ -279,7 +279,7 @@ Share.changeNotebook = function(userId, notebookId, callback) {
 	Share.toggleToSharedNav(userId, notebookId);
 
 	// 1
-	Note.curChangedSaveIt();
+	Editor.saveNoteChange();
 	
 	// 2 先清空所有
 	Note.clearAll();

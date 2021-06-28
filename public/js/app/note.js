@@ -8,219 +8,6 @@
 
 Note.isReadOnly = false;
 
-// 当前的note是否改变过了?
-// 返回已改变的信息
-Note.curHasChanged = function(force, isRefreshOrCtrls) {
-
-	var cacheNote = Cache.getCurNote(); 
-	if (!cacheNote) {
-		return false;
-	}
-
-	var hasChanged = {
-		hasChanged: false, // 总的是否有改变
-		IsNew: cacheNote.IsNew, // 是否是新添加的
-		IsMarkdown: cacheNote.IsMarkdown, // 是否是markdown笔记
-		FromUserId: cacheNote.FromUserId, // 是否是共享新建的
-		NoteId: cacheNote.NoteId,
-		NotebookId: cacheNote.NotebookId
-	};
-
-	// 收集当前信息, 与cache比对
-	var title = $('#noteTitle').val();
-	var tags = Tag.getTags();
-
-	if (cacheNote.IsNew) {
-		hasChanged.hasChanged = true;
-		hasChanged.title = title;
-		// 来源
-		if (LEA.topInfo) {
-			hasChanged.Src = LEA.topInfo.src;
-		}
-	}
-
-	if(cacheNote.Title != title) {
-		hasChanged.hasChanged = true; // 本页使用用小写
-		hasChanged.Title = title; // 要传到后台的用大写
-	}
-	
-	if(!arrayEqual(cacheNote.Tags, tags)) {
-		hasChanged.hasChanged = true;
-		hasChanged.Tags = tags.join(","); // 为什么? 因为空数组不会传到后台
-	}
-
-	// 是否需要检查内容呢?
-
-	var needCheckContent = false;
-	if (cacheNote.IsNew || force || !Note.readOnly) {
-		needCheckContent = true;
-	}
-
-	// 标题, 标签, 内容都没改变
-	if (!hasChanged.hasChanged && !needCheckContent) {
-		return false;
-	}
-
-	if (!needCheckContent) {
-		return hasChanged;
-	}
-
-	//===========
-	// 内容的比较
-
-	// 如果是markdown返回[content, preview]
-	var contents = getEditorContent(cacheNote.IsMarkdown);
-	var content, preview;
-	if (isArray(contents)) {
-		content = contents[0];
-		preview = contents[1];
-		// preview可能没来得到及解析
-		if (content && previewIsEmpty(preview) && Converter) {
-			preview = Converter.makeHtml(content);
-		}
-		if(!content) {
-			preview = "";
-		}
-		cacheNote.Preview = preview; // 仅仅缓存在前台
-	} else {
-		content = contents;
-	}
-
-	// 如果是插件, 且没有改动任何地方
-	if ( hasChanged.Src && LEA.topInfo && title === LEA.topInfo.title && !hasChanged.Tags &&
-		(!content || content == '<p><br></p>')) {
-		// 如果不是手动ctrl+s, 则不保存
-		if (!(isRefreshOrCtrls && isRefreshOrCtrls.ctrls)) {
-			return false;
-		}
-	}
-	
-	if (cacheNote.Content != content) {
-		hasChanged.hasChanged = true;
-		hasChanged.Content = content;
-		
-		// 从html中得到...
-		var c = preview || content;
-		
-		// 不是博客或没有自定义设置的
-		if(!cacheNote.HasSelfDefined || !cacheNote.IsBlog) {
-			hasChanged.Desc = Cache.genDescFromContent(c);
-			hasChanged.ImgSrc = Cache.getImgSrcFromContent(c);
-			hasChanged.Abstract = Cache.getImgSrcFromContent(c);
-		}
-	} else {
-		log("text相同");
-	}
-
-	if (hasChanged.hasChanged) {
-		return hasChanged;
-	}
-	return false;
-};
-
-Note.getCurEditorContent = function(){
-	var cacheNote = Cache.getCurNote(); 
-	var contents = getEditorContent(cacheNote.IsMarkdown);
-	return contents[0];
-}
-
-// 保存mindmap中的更改
-Note.saveChangeInMindmap = function(markdown){
-	var cacheNote = Cache.getCurNote(); 
-	if (!cacheNote) {
-		return;
-	}
-
-	if (cacheNote.Content === markdown) {
-		return;
-	}
-
-	cacheNote.Content = markdown;
-	// cacheNote.preview = Converter.makeHtml(markdown);
-	setEditorContent(cacheNote.Content, cacheNote.IsMarkdown, cacheNote.Preview);
-
-	var hasChanged = {
-		hasChanged: true, // 总的是否有改变
-		IsNew: cacheNote.IsNew, // 是否是新添加的
-		IsMarkdown: cacheNote.IsMarkdown, // 是否是markdown笔记
-		FromUserId: cacheNote.FromUserId, // 是否是共享新建的
-		NoteId: cacheNote.NoteId,
-		NotebookId: cacheNote.NotebookId,
-		Content: markdown
-	};
-	Note.saveChange(hasChanged);
-}
-
-
-// 如果当前的改变了, 就保存它
-// 以后要定时调用
-// force , 默认是true, 表强校验内容
-// 定时保存传false
-Note.saveInProcess = {}; // noteId => bool, true表示该note正在保存到服务器, 服务器未响应
-Note.curChangedSaveIt = function(force, callback, isRefreshOrCtrls) {
-	// 如果当前没有笔记, 不保存
-	// 或者是共享的只读笔记
-	if(!Cache.curNoteId || Note.isReadOnly) {
-		// log(!Note.curNoteId ? '无当前笔记' : '共享只读');
-		return;
-	}
-	var hasChanged;
-	try {
-		hasChanged = Note.curHasChanged(force, isRefreshOrCtrls);
-	} catch(e) {
-		// console.error('获取当前改变的笔记错误!');
-		callback && callback(false);
-		return;
-	}
-	
-	if(hasChanged && hasChanged.hasChanged) {
-
-		Note.saveChange(hasChanged, callback);
-
-		return hasChanged;
-	}
-	else {
-		log('无需保存');
-	}
-
-	return false;
-};
-
-Note.saveChange = function(hasChanged, callback){
-	var me = this;
-	log('需要保存...');
-	// 把已改变的渲染到左边 item-list
-	NoteList.renderChangedNote(hasChanged);
-	delete hasChanged.hasChanged;
-	
-	// 保存之
-	showMsg(getMsg("saving"));
-	
-	me.saveInProcess[hasChanged.NoteId] = true;
-	
-	Net.ajaxPost("/note/updateNoteOrContent", hasChanged, function(ret) {
-		me.saveInProcess[hasChanged.NoteId] = false;
-		if(hasChanged.IsNew) {
-			// 缓存之, 后台得到其它信息
-			ret.IsNew = false;
-			Cache.setNoteContent(ret);
-
-			// 新建笔记也要change history
-			Pjax.changeNote(ret);
-		}
-		callback && callback();
-		showMsg(getMsg("saveSuccess"), 1000);
-	});
-	
-	if(hasChanged['Tags'] != undefined && typeof hasChanged['Tags'] == 'string') {
-		hasChanged['Tags'] = hasChanged['Tags'].split(',');
-	}
-	// 先缓存, 把markdown的preview也缓存起来
-	Cache.setNoteContent(hasChanged);
-	// 设置更新时间
-	Cache.setNoteContent({"NoteId": hasChanged.NoteId, "UpdatedTime": (new Date()).format("yyyy-MM-ddThh:mm:ss.S")}, false);
-}
-
 // 样式
 Note.clearSelect = function(target) {
 	$(".item").removeClass("item-active");
@@ -228,7 +15,6 @@ Note.clearSelect = function(target) {
 Note.selectTarget = function(target) {
 	this.clearSelect();
 	$(target).addClass("item-active");
-
 	// this.batch.reset();
 };
 
@@ -255,11 +41,6 @@ Note.directToNote = function(noteId) {
 	var pTop = position.top;
 	var scrollTop = $p.scrollTop();
 	pTop += scrollTop;
-	/*
-	log("..");
-	log(noteId);
-	log(pTop + ' ' + pHeight + ' ' + scrollTop);
-	*/
 	
 	// 当前的可视范围的元素位置是[scrollTop, pHeight + scrollTop]
 	if(pTop >= scrollTop && pTop <= pHeight + scrollTop) {
@@ -293,7 +74,7 @@ Note.changeNoteForPjax = function(noteId, mustPush, needTargetNotebook) {
 			mustPush = true;
 		}
 		if(mustPush) {
-			Pjax.changeNote(note);
+			Net.Pjax.changeNote(note);
 		}
 		
 		// popstate时虽然选中了note, 但位置可能不可见
@@ -343,7 +124,6 @@ Note.clearNoteList = function() {
 // 清空所有, 在转换notebook时使用
 Note.clearAll = function() {
 	// 当前的笔记清空掉
-	Cache.clearCurNoteId();
 	
 	Note.clearNoteInfo();
 	Note.clearNoteList();
@@ -429,7 +209,7 @@ Note.setNotesSorter = function (e) {
 
 
 // 列表是
-Note.listIsIn = function (isTag, isSearch) {
+Note.listIsInTagOrSearch = function (isTag, isSearch) {
 	this._isTag = isTag;
 	this._isSearch = isSearch;
 };
@@ -452,7 +232,7 @@ Note.newNote = function(notebookId, fromUserId, isMarkdown) {
 
 	Timer.stopInterval();
 	// 保存当前的笔记
-	Note.curChangedSaveIt();
+	Editor.saveNoteChange();
 
 	NoteList.batch.reset();
 
@@ -628,7 +408,7 @@ Note.searchNote = function() {
 	
 	// 步骤与tag的搜索一样 
 	// 1
-	Note.curChangedSaveIt();
+	Editor.saveNoteChange();
 	
 	// 2 先清空所有
 	Note.clearAll();
@@ -638,7 +418,7 @@ Note.searchNote = function() {
 	showLoading();
 	Notebook.showNoteAndEditorLoading();
 
-	Note.listIsIn(false, true);
+	Note.listIsInTagOrSearch(false, true);
 	$("#tagSearch").hide();
 
 	Note.lastSearch = $.post("/note/searchNote", {key: val}, function(notes) {
@@ -650,7 +430,7 @@ Note.searchNote = function() {
 			// renderNotes只是note列表加载, 右侧笔记详情还没加载
 			// 这个时候, 定位第一个, 保存之前的,
 			// 	如果: 第一次搜索, renderNotes OK, 还没等到changeNote时
-			//		第二次搜索来到, Note.curChangedSaveIt();
+			//		第二次搜索来到, Editor.saveNoteChange();
 			//		导致没有标题了
 			// 不是这个原因, 下面的Note.changeNote会导致保存
 			
@@ -721,7 +501,7 @@ Note.readOnly = true; // 默认为false要好?
 LEA.readOnly = true;
 // 切换只读模式
 Note.toggleReadOnly = function(needSave) {
-	if(LEA.em && LEA.em.isWriting()) { // 写作模式下
+	if(LEA.editorMode && LEA.editorMode.isWriting()) { // 写作模式下
 		return Note.toggleWriteable();
 	}
 
@@ -755,7 +535,7 @@ Note.toggleReadOnly = function(needSave) {
 	
 	// 保存之
 	if (needSave) {
-		Note.curChangedSaveIt();
+		Editor.saveNoteChange();
 	}
 	
 	Note.readOnly = true;
@@ -823,15 +603,6 @@ Note.getPostUrl = function (note) {
 
 //------------------- 事件
 $(function() {
-	//-----------------
-	// 点击笔记展示之
-	// 避免iphone, ipad两次点击
-	// http://stackoverflow.com/questions/3038898/ipad-iphone-hover-problem-causes-the-user-to-double-click-a-link
-	$("#noteItemList").on("mouseenter", ".item", function(event) {
-		if(LEA.isIpad || LEA.isIphone) {
-			$(this).trigger("click");
-		}
-	});
 
 	//------------------
 	// 新建笔记
@@ -853,11 +624,12 @@ $(function() {
 	// note title 里按tab, 切换到编辑区
 	$('#noteTitle').on("keydown", function(e) {
 		var keyCode = e.keyCode || e.witch;
-		// tab
-		if (keyCode == 9) {
+		if (keyCode == 9) { //tab
 			// 一举两得, 即切换到了writable, 又focus了
 			Note.toggleWriteable();
 			e.preventDefault();
+		}else if (keyCode == 13) { //enter
+			Editor.saveNoteChange(true);
 		}
 	});
 	
@@ -874,7 +646,7 @@ $(function() {
 	
 	$("#saveBtn").click(function() {
 		// 只有在这里, 才会force
-		Note.curChangedSaveIt(true);
+		Editor.saveNoteChange(true);
 	});
 
 	// readony

@@ -1,3 +1,9 @@
+/*
+ * @Author: Ethan Wu
+ * @Date: 2021-06-15 15:03:33
+ * @LastEditTime: 2021-06-28 17:12:26
+ * @FilePath: /leanote/public/js/app/Mobile.js
+ */
 //--------------------------
 // 手机端访问之
 Mobile = {
@@ -96,3 +102,4 @@ Mobile = {
 		return false;
 	}
 }
+Mobile.init();

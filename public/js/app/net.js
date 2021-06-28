@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-27 17:18:43
- * @LastEditTime: 2021-06-27 17:34:14
+ * @LastEditTime: 2021-06-28 14:41:49
  * @FilePath: /leanote/public/js/app/net.js
  */
 //管理网络请求，把所有的请求函数写在这个文件中方便管理
@@ -142,3 +142,96 @@ Net.post = function(url, param, func, btnId) {
 		}
 	});
 }
+
+//------------
+// pjax
+//------------
+Net.Pjax = {
+	init: function() {
+		var me = this;
+		// 当history改变时
+		window.addEventListener('popstate', function(evt){
+			var state = evt.state;
+			if(!state) {
+				return;
+			}
+			document.title = state.title || "Untitled";
+			log("pop");
+			me.changeNotebookAndNote(state.noteId);
+		}, false);
+		
+		// ie9
+		if(!history.pushState) {
+			$(window).on("hashchange", function() {
+				var noteId = getHash("noteId");;
+				if(noteId) {
+					me.changeNotebookAndNote(noteId);
+				}
+			});
+		}
+	},
+	// pjax调用
+	// popstate事件发生时, 转换到noteId下, 此时要转换notebookId
+	changeNotebookAndNote: function(noteId) {
+		var note = SharedData.getNote(noteId);
+		if(!note) {
+			return;
+		}
+		var isShare = note.Perm != undefined;
+		
+		var notebookId = note.NotebookId;
+		// 如果是在当前notebook下, 就不要转换notebook了
+		if(Notebook.curNotebookId == notebookId) {
+			// 不push state
+			Note.changeNoteForPjax(noteId, false);
+			return;
+		}
+		
+		// 自己的
+		if(!isShare) {
+			// 先切换到notebook下, 得到notes列表, 再changeNote
+			Notebook.changeNotebook(notebookId, function(notes) {
+				NoteList.renderNotes(notes);
+				// 不push state
+				Note.changeNoteForPjax(noteId, false, true);
+			});
+		// 共享笔记
+		} else {
+			Share.changeNotebook(note.UserId, notebookId, function(notes) {
+				NoteList.renderNotes(notes);
+				// 不push state
+				Note.changeNoteForPjax(noteId, false, true);
+			});
+		}
+	},
+		
+	// ajax后调用
+	changeNote: function(noteInfo) {
+		var me = this;
+		var noteId = noteInfo.NoteId;
+		var title = noteInfo.Title;
+		var url = '/note/' + noteId;
+		if (location.href.indexOf('?online') > 0) {
+			url += '?online=' + /online=([0-9])/.exec(location.href)[1];
+		}
+		if(location.hash) {
+			url += location.hash;
+		}
+		// 如果支持pushState
+		if(history.pushState) {
+			var state=({
+				url: url,
+				noteId: noteId,
+				title: title,
+			});
+			history.pushState(state, title, url);
+			document.title = title || 'Untitled';
+		// 不支持, 则用hash
+		} else {
+			setHash("noteId", noteId);
+		}
+	}
+};
+$(function() {
+	Net.Pjax.init();
+});

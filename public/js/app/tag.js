@@ -174,7 +174,7 @@ Tag.appendTag = function(tag, save) {
 	if(save) {
 		// 如果之前不存, 则添加之
 		if(!isExists) {
-			Note.curChangedSaveIt(true, function() {
+			Editor.saveNoteChange(true, function() {
 				ajaxPost("/tag/updateTag", {tag: rawText}, function(ret) {
 					if(reIsOk(ret)) {
 						Tag.addTagNav(ret.Item);
@@ -209,7 +209,7 @@ Tag.removeTag = function($target) {
 	if(LEA.locale == "zh") {
 		tag = Tag.mapCn2En[tag] || tag;
 	}
-	Note.curChangedSaveIt(true, function() {
+	Editor.saveNoteChange(true, function() {
 		return;
 
 		ajaxPost("/tag/updateTag", {tag: tag}, function(ret) {
@@ -361,7 +361,7 @@ $(function() {
 		// 学习changeNotebook
 		
 		// 1
-		Note.curChangedSaveIt();
+		Editor.saveNoteChange();
 		
 		// 2 先清空所有
 		// 也会把curNoteId清空

@@ -510,6 +510,9 @@ NoteList.changeNote = function(selectNoteId, needSaveChanged, callback) {
 		return;
 	}
 	
+	Note.hideReadOnly();
+	Note.renderNote(cacheNote);
+
 	// 这里要切换编辑器
 	switchEditor(cacheNote.IsMarkdown);
 
@@ -758,7 +761,7 @@ NoteList.batch = {
 
 	// 可以多选
 	canBatch: function () {
-		return !LEA.em.isWritingMode;
+		return !LEA.editorMode.isWritingMode;
 	},
 
 	init: function() {
@@ -785,7 +788,7 @@ NoteList.batch = {
 			// 多选操作
 			//----------
 			if (isMulti || isConti) {
-				Note.curChangedSaveIt();
+				Editor.saveNoteChange();
 			}
 
 			// 多选
@@ -837,7 +840,7 @@ NoteList.batch = {
 		me.$noteItemList.on("mousemove", ".item", function(e) {
 			if (me.canBatch() && me._startMove) {
 
-				Note.curChangedSaveIt();
+				Editor.saveNoteChange();
 
 				me.clearAllSelect();
 
@@ -859,7 +862,7 @@ NoteList.batch = {
 					e.preventDefault();
 
 					if(me.canBatch()) {
-						Note.curChangedSaveIt();
+						Editor.saveNoteChange();
 
 						me.selectAll();
 						me.finalFix();
@@ -1001,7 +1004,7 @@ NoteList.batch = {
 		if (me._notes[noteId]) {
 			return;
 		}
-		var note = Cache.getCurNote(noteId);
+		var note = Cache.getNote(noteId);
 		var title = note.Title || getMsg('unTitled');
 		var desc = note.Desc || '...';
 		var $note = $('<div class="batch-note"><div class="title">' + title + '</div><div class="content">' + desc + '</div></div>');
@@ -1075,6 +1078,16 @@ NoteList.renderChangedNote = function(note) {
 
 
 $(function() {
+	//-----------------
+	// 点击笔记展示之
+	// 避免iphone, ipad两次点击
+	// http://stackoverflow.com/questions/3038898/ipad-iphone-hover-problem-causes-the-user-to-double-click-a-link
+	$("#noteItemList").on("mouseenter", ".item", function(event) {
+		if(LEA.isIpad || LEA.isIphone) {
+			$(this).trigger("click");
+		}
+	});
+
 	NoteList.batch.init();
 	// blog
 	NoteList.$itemList.on("click", ".item-blog", function(e) {

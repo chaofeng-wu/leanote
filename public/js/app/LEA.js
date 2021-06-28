@@ -1,8 +1,8 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-26 15:14:06
- * @LastEditTime: 2021-06-26 15:18:58
- * @FilePath: /leanote/public/js/app/lea.js
+ * @LastEditTime: 2021-06-28 17:07:36
+ * @FilePath: /leanote/public/js/app/LEA.js
  */
 
 //-------------
@@ -52,3 +52,5 @@ var LEA = {
         }
     }
 };
+
+LEA.s3 = new Date();
