@@ -101,7 +101,7 @@ var Resize = {
 		var self = this;
 		if(self.lineMove || self.mdLineMove) {
 			// ajax保存
-			ajaxGet("/user/updateColumnWidth", {mdEditorWidth: UserInfo.MdEditorWidth, notebookWidth: UserInfo.NotebookWidth, noteListWidth: UserInfo.NoteListWidth}, function() {
+			Net.ajaxGet("/user/updateColumnWidth", {mdEditorWidth: UserInfo.MdEditorWidth, notebookWidth: UserInfo.NotebookWidth, noteListWidth: UserInfo.NoteListWidth}, function() {
 			});
 		}
 		self.lineMove = false;

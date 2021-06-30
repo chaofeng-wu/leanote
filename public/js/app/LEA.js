@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-26 15:14:06
- * @LastEditTime: 2021-06-29 16:44:04
+ * @LastEditTime: 2021-06-30 14:08:41
  * @FilePath: /leanote/public/js/app/LEA.js
  */
 
@@ -15,7 +15,7 @@ var LEA = {
     bookmark : null,
     hasBookmark : false,
     sPath : "/public",
-
+    readOnly : true,
     
 	_eventCallbacks: {},
 	_listen: function(type, callback) {

@@ -131,7 +131,7 @@ Note.renderNoteContent = function(content) {
 
 	Editor.setEditorContent(content.Content, content.IsMarkdown, content.Preview, function() {
 		Cache.setCurNoteId(content.NoteId);
-		Note.toggleReadOnly();
+		Editor.toggleReadOnly();
 	});
 
 	// 只有在renderNoteContent时才设置curNoteId
@@ -447,103 +447,6 @@ Note.deleteNoteTag = function(item, tag) {
 	}
 };
 
-// readonly
-Note.readOnly = true; // 默认为false要好?
-LEA.readOnly = true;
-// 切换只读模式
-Note.toggleReadOnly = function(needSave) {
-	if(LEA.editorMode && LEA.editorMode.isWriting()) { // 写作模式下
-		return Note.toggleWriteable();
-	}
-
-	var me = this;
-	var note = Cache.getCurNote();
-
-	// tinymce
-	var $editor = $('#editor');
-	$editor.addClass('read-only').removeClass('all-tool'); // 不要全部的
-
-	// 不可写
-	$('#editorContent').attr('contenteditable', false);
-
-	// markdown
-	$('#mdEditor').addClass('read-only');
-	$('#note').addClass('read-only-editor');
-
-	if(!note) {
-		return;
-	}
-	
-	$('.info-toolbar').removeClass('invisible');
-	if(note.IsMarkdown) {
-		$('#mdInfoToolbar .created-time').html(goNowToDatetime(note.CreatedTime));
-		$('#mdInfoToolbar .updated-time').html(goNowToDatetime(note.UpdatedTime));
-	}
-	else {
-		$('#infoToolbar .created-time').html(goNowToDatetime(note.CreatedTime));
-		$('#infoToolbar .updated-time').html(goNowToDatetime(note.UpdatedTime));
-	}
-	
-	// 保存之
-	if (needSave) {
-		Editor.saveNoteChange();
-	}
-	
-	Note.readOnly = true;
-	LEA.readOnly = true;
-
-	if(!note.IsMarkdown) {
-		// 里面的pre也设为不可写
-		$('#editorContent pre').each(function() {
-			LeaAce.setAceReadOnly($(this), true);
-		});
-	}
-};
-// 切换到编辑模式
-LEA.toggleWriteable = Note.toggleWriteable = function(isFromNewNote) {
-	var me = Note;
-
-	// $('#infoToolbar').hide();
-	$('#editor').removeClass('read-only');
-	$('#note').removeClass('read-only-editor');
-	$('#editorContent').attr('contenteditable', true);
-
-	// markdown
-	$('#mdEditor').removeClass('read-only');
-
-	var note = Cache.getCurNote();
-	if(!note) {
-		return;
-	}
-
-	Note.readOnly = false;
-	LEA.readOnly = false;
-
-	if(!note.IsMarkdown) {
-		// 里面的pre也设为不可写
-		$('#editorContent pre').each(function() {
-			LeaAce.setAceReadOnly($(this), false);
-		});
-		isFromNewNote || tinymce.activeEditor.focus();
-	}
-	else {
-		if(MD) {
-			isFromNewNote || MD.focus();
-			MD.onResize();
-		}
-	}
-};
-
-// page ctrl+e也会
-Note.toggleWriteableAndReadOnly = function () {
-	if (LEA.readOnly) {
-		Note.toggleWriteable();
-	}
-	else {
-		Note.toggleReadOnly(true);
-	}
-};
-
 Note.getPostUrl = function (note) {
 	var urlTitle = note.UrlTitle || note.NoteId;
 	return UserInfo.PostUrl + '/' + urlTitle;
@@ -574,7 +477,7 @@ $(function() {
 		var keyCode = e.keyCode || e.witch;
 		if (keyCode == 9) { //tab
 			// 一举两得, 即切换到了writable, 又focus了
-			Note.toggleWriteable();
+			Editor.toggleWriteable();
 			e.preventDefault();
 		}else if (keyCode == 13) { //enter
 			Editor.saveNoteChange(true);
@@ -600,10 +503,10 @@ $(function() {
 	// readony
 	// 修改
 	$('.toolbar-update').click(function() {
-		Note.toggleWriteable();
+		Editor.toggleWriteable();
 	});
 	$("#editBtn").click(function() {
-		Note.toggleWriteableAndReadOnly();
+		Editor.toggleWriteableAndReadOnly();
 	});
 
 	//
