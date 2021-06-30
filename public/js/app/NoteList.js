@@ -15,9 +15,17 @@ NoteList.newItemTpl += NoteList.itemIsBlog + '<div class="item-desc" style="righ
 
 NoteList.noteItemListO = $("#noteItemList");
 
+NoteList.$itemList = $('#noteItemList');
+NoteList.getTargetById = function(noteId) {
+	return this.$itemList.find('li[noteId="' + noteId + '"]');
+};
 
-// called by Notebook
-// render 所有notes, 和第一个note的content
+
+/**
+ * @description: called by Notebook, render 所有notes, 和第一个note的content
+ * @param {*} ret
+ * @return {*}
+ */
 NoteList.renderNotesAndFirstOneContent = function(ret) {
 	// 错误的ret是一个Object
 	if(!isArray(ret)) {
@@ -29,10 +37,8 @@ NoteList.renderNotesAndFirstOneContent = function(ret) {
 	// 渲染第一个
 	if(!isEmpty(ret[0])) {
 		Note.changeNoteForPjax(ret[0].NoteId, true, false);
-	} else {
 	}
 }
-
 NoteList._seqForNew = 0;
 NoteList.clearSeqForNew = function () {
 	this._seqForNew = 0;
@@ -117,21 +123,23 @@ NoteList._renderNotes = function(notes, forNewNote, tang) { // 第几趟
 	}
 };
 
-// Notebook调用
 NoteList.contextmenu = null;
-NoteList.notebooksCopy = []; // share会用到
+/**
+ * @description: 初始化notelist的Contextmenu
+ * @param {*}
+ * @return {*}
+ */
 NoteList.initContextmenu = function() {
 	var self = NoteList;
 	if(NoteList.contextmenu) {
 		NoteList.contextmenu.destroy();
 	}
 	// 得到可移动的notebook
-	var notebooks = Notebook.everNotebooks;
+	var notebooks = Cache.notebooksList.slice(1,-1);
 	var mc = self.getContextNotebooks(notebooks);
 	
 	var notebooksMove = mc[0];
 	var notebooksCopy = mc[1];
-	self.notebooksCopy = mc[2];
 	
 	//---------------------
 	// context menu
@@ -221,11 +229,14 @@ NoteList.initContextmenu = function() {
 	NoteList.contextmenu = $("#noteItemList .item-my").contextmenu(noteListMenu);
 };
 
-// 这里速度不慢, 很快
+/**
+ * @description: 获取可以操作的notebook集合
+ * @param {*} notebooks
+ * @return {*}
+ */
 NoteList.getContextNotebooks = function(notebooks) {
 	var moves = [];
 	var copys = [];
-	var copys2 = [];
 	for(var i in notebooks) {
 		var notebook = notebooks[i];
 		var move = {text: notebook.Title, notebookId: notebook.NotebookId, action: NoteList.moveNote}
@@ -234,34 +245,29 @@ NoteList.getContextNotebooks = function(notebooks) {
 			var mc = NoteList.getContextNotebooks(notebook.Subs);
 			move.items = mc[0];
 			copy.items = mc[1];
-			copy2.items = mc[2];
 			move.type = "group";
 			move.width = 150;
 			copy.type = "group";
 			copy.width = 150;
-			copy2.type = "group";
-			copy2.width = 150;
 		}
 		moves.push(move);
 		copys.push(copy);
-		copys2.push(copy2);
 	}
-	return [moves, copys, copys2];
+	return [moves, copys];
 };
 
-NoteList.$itemList = $('#noteItemList');
-NoteList.getTargetById = function(noteId) {
-	return this.$itemList.find('li[noteId="' + noteId + '"]');
-};
-//----------
-//设为blog/unset
+/**
+ * @description: 设置note的blog状态
+ * @param {*} target
+ * @return {*}
+ */
 NoteList.setNote2Blog = function(target) {
-	NoteList._setBlog(target, true);
+	NoteList.setBlogStatus(target, true);
 };
 NoteList.unsetNote2Blog = function(target) {
-	NoteList._setBlog(target, false);
+	NoteList.setBlogStatus(target, false);
 };
-NoteList._setBlog = function(target, isBlog) {
+NoteList.setBlogStatus = function(target, isBlog) {
 	// 批量操作
 	var noteIds;
 	if (NoteList.inBatch) {
@@ -286,16 +292,24 @@ NoteList._setBlog = function(target, isBlog) {
 	});
 };
 
-// 导出成PDF
+/**
+ * @description: 导出成PDF
+ * @param {*} target
+ * @return {*}
+ */
 NoteList.exportPDF = function(target) {
 	var noteId = $(target).attr("noteId");
 	$('<form target="mdImageManager" action="/note/exportPdf" method="GET"><input name="noteId" value="' + noteId + '"/></form>').appendTo('body').submit().remove();
 };
 
-// 删除笔记
-// 1. 先隐藏, 成功后再移除DOM
-// 2. ajax之 noteId
-// Share.deleteSharedNote调用
+/**
+ * @description: 删除笔记
+ * 				1. 先隐藏, 成功后再移除DOM
+ * 				2. ajax之 noteId
+ * @param {*} target
+ * @param {*} contextmenuItem
+ * @return {*}
+ */
 NoteList.deleteNote = function(target, contextmenuItem) {
 	var me = NoteList;
 
@@ -351,7 +365,12 @@ NoteList.deleteNote = function(target, contextmenuItem) {
 	NoteList.batch.reset();
 };
 
-// 移动
+/**
+ * @description: 移动笔记
+ * @param {*} target
+ * @param {*} data
+ * @return {*}
+ */
 NoteList.moveNote = function(target, data) {
 	// 批量操作
 	var noteIds;
@@ -364,7 +383,7 @@ NoteList.moveNote = function(target, data) {
 
 	// 当前在该笔记本下
 	var toNotebookId = data.notebookId;
-	if (Notebook.getCurNotebookId() == toNotebookId) {
+	if (Cache.getCurNotebookId() == toNotebookId) {
 		return;
 	}
 
@@ -392,8 +411,6 @@ NoteList.moveNote = function(target, data) {
 					else if (note.IsTrash) {
 						Notebook.incrNotebookNumberNotes(note.NotebookId);
 					}
-
-					// Note.clearCacheByNotebookId(note.NotebookId);
 
 					// 设置缓存
 					note.NotebookId = toNotebookId;
@@ -426,13 +443,17 @@ NoteList.moveNote = function(target, data) {
 	});
 
 	// 重置, 因为可能移动后笔记下没笔记了
-	Note.batch.reset();
+	NoteList.batch.reset();
 };
 
-// 复制
-// data是自动传来的, 是contextmenu数据 
+/**
+ * @description: 复制笔记
+ * @param {*} target
+ * @param {*} data: data是自动传来的, 是contextmenu数据 
+ * @return {*}
+ */
 NoteList.copyNote = function(target, data) {
-	var me = Note;
+	var me = NoteList;
 
 	var toNotebookId = data.notebookId;
 	var noteIds;
@@ -447,7 +468,7 @@ NoteList.copyNote = function(target, data) {
 	var needNoteIds = [];
 	for (var i = 0; i < noteIds.length; ++i) {
 		var noteId = noteIds[i];
-		var note = me.getNote(noteId);
+		var note = Cache.getNote(noteId);
 		if (note) {
 			// trash不能复制, 不能复制给自己
 			if (note.IsTrash || note.NotebookId == toNotebookId) {
@@ -471,7 +492,7 @@ NoteList.copyNote = function(target, data) {
 			}
 
 			// 重新清空cache 之后的
-			Note.clearCacheByNotebookId(toNotebookId);
+			// Note.clearCacheByNotebookId(toNotebookId);
 			for (var i = 0; i < notes.length; ++i) {
 				var note = notes[i];
 				if (!note.NoteId) {
@@ -498,7 +519,7 @@ NoteList.changeNote = function(selectNoteId, needSaveChanged, callback) {
 
 	// 0
 	var target = NoteList.getTargetById(selectNoteId);
-	Note.selectTarget(target);
+	NoteList.selectTarget(target);
 	
 	// 2. 设空, 防止在内容得到之前又发生保存
 	Cache.clearCurNoteId();
@@ -514,7 +535,7 @@ NoteList.changeNote = function(selectNoteId, needSaveChanged, callback) {
 	Note.renderNote(cacheNote);
 
 	// 这里要切换编辑器
-	switchEditor(cacheNote.IsMarkdown);
+	Editor.switchEditor(cacheNote.IsMarkdown);
 
 	// 发送事件
 	LEA.trigger('noteChanged', cacheNote);
@@ -610,6 +631,16 @@ NoteList.changeToNextSkipNotes = function(noteIds) {
 	if ($next) {
 		NoteList.changeNote($next.attr("noteId"));
 	}
+};
+
+// NoteList的选中样式
+NoteList.clearSelect = function(target) {
+	$(".item").removeClass("item-active");
+};
+NoteList.selectTarget = function(target) {
+	this.clearSelect();
+	$(target).addClass("item-active");
+	// this.batch.reset();
 };
 
 
@@ -713,7 +744,7 @@ NoteList.batch = {
 	},
 
 	clearAllSelect: function () {
-		Note.clearSelect();
+		NoteList.clearSelect();
 	},
 
 	selectTarget: function ($target) {
@@ -808,7 +839,7 @@ NoteList.batch = {
 
 			// 否则, 不是多选, 清空item-active
 			else {
-				Note.selectTarget($this);
+				NoteList.selectTarget($this);
 			}
 
 			me.finalFix();
@@ -1022,7 +1053,7 @@ NoteList.batch = {
  * @param  {[type]} e [description]
  * @return {[type]}   [description]
  */
- NoteList.toggleView = function (e) {
+NoteList.toggleView = function (e) {
 	var view;
 	if (typeof e == 'object' && e) {
 		view = $(e.target).data('view');
@@ -1074,6 +1105,43 @@ NoteList.renderChangedNote = function(note) {
 		$leftNoteNav.find(".item-thumb").remove(); // 以前有, 现在没有了
 		$leftNoteNav.removeClass("item-image");
 	}
+};
+
+//更改notes的排序类型
+var $sorterStyles = $('.sorter-style');
+NoteList.checkSorter = function (sorterType) {
+	// UC无痕浏览
+	if (!sorterType) {
+		sorterType = 'dateUpdatedDESC';
+	}
+	var $selected = $('.sorter-' + sorterType);
+	if ($selected.is('.checked')) {
+		return;
+	}
+	$sorterStyles.removeClass('checked');
+	$selected.addClass('checked');
+};
+// 重新设置sorter, 此时要重新render
+// sortType = dateCreatedASC dateCreatedDESC
+NoteList.setNotesSorter = function (e) {
+	var sorterType = $(e.currentTarget).data('sorter');
+	if (!sorterType) {
+		sorterType = 'dateUpdatedDESC';
+	}
+	localStorage.setItem("sorterType", sorterType);
+	// alert(localStorage.getItem("sorterType"));
+	NoteList.checkSorter(sorterType);
+
+    // 如果当前是tagSearch, search, star 怎么办?
+	// 重新Render
+    if (Note._isTag || Note._isSearch) {
+        // Note.renderNotesAndFirstOneContent(Note._everNotes, false);
+    } else {
+        // 其实这里也可以用Note._everNotes, 主要是为了缓存数据
+        Notebook.changeNotebook(Cache.curNotebookId);
+    }
+    // Note.renderNotesAndTargetNote(Note._everNotes, false, false);
+	// Api.writeConfig(Config);
 };
 
 

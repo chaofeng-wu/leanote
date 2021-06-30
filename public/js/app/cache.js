@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-26 16:53:10
- * @LastEditTime: 2021-06-27 16:11:52
+ * @LastEditTime: 2021-06-29 15:20:25
  * @FilePath: /leanote/public/js/app/cache.js
  */
 
@@ -254,6 +254,9 @@ Cache.notebookHasNotes = function(notebookId) {
 	return notes.length > 0;
 };
 
+Cache.deleteNote = function(noteId){
+	delete this.cachedNotes[noteId];
+}
 //------------------------------------------
 //对notebook进行操作
 //------------------------------------------

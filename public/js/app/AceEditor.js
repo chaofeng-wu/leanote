@@ -153,7 +153,7 @@ LeaAce = {
 				
 				var aceAndNode = me.isInAce(pre);
 				if(aceAndNode) {
-					if(isAceError(aceAndNode[0].getValue())) {
+					if(this.isAceError(aceAndNode[0].getValue())) {
 						console.error('之前有些没有destroy掉');
 					}
 					else {
@@ -368,7 +368,7 @@ LeaAce = {
 			var $pre = aceEditorAndPre[1];
 			var value = aceEditor.getValue();
 			// 表示有错
-			if(isAceError(value)) {
+			if(this.isAceError(value)) {
 				value = $pre.html();
 			}
 			value = value.replace(/</g, '&lt').replace(/>/g, '&gt');
@@ -407,6 +407,12 @@ LeaAce = {
 			}
 			catch(e){}
 		}
+	},
+	isAceError: function(val) {
+		if(!val) {
+			return false;
+		}
+		return val.indexOf('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX') != -1;
 	},
 	curToggleRaw: null,
 	// 转换raw <-> code

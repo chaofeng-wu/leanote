@@ -34,7 +34,7 @@ editorMode.prototype.init = function() {
 	var self = this;
 	$(".toggle-editor-mode").click(function(e) {
 		e.preventDefault();
-		saveBookmark();
+		LEA.saveBookmark();
 		var $a = $(this).find("a");
 		var isWriting = self.isWriting($a.attr("href"));
 		self.changeMode(isWriting);
@@ -45,7 +45,7 @@ editorMode.prototype.init = function() {
 			setHash("m", self.normalHash);
 		}
 		
-		restoreBookmark();
+		LEA.restoreBookmark();
 	});
 }
 // 改变模式
@@ -61,13 +61,13 @@ editorMode.prototype.changeMode = function(isWritingMode) {
 editorMode.prototype.resizeEditor = function() {
 	// css还没渲染完
 	setTimeout(function() {
-		resizeEditor();
+		Editor.resizeEditor();
 	}, 10);
 	setTimeout(function() {
-		resizeEditor();
+		Editor.resizeEditor();
 	}, 20);
 	setTimeout(function() {
-		resizeEditor();
+		Editor.resizeEditor();
 	}, 500);
 }
 editorMode.prototype.normalMode = function() {

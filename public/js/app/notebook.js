@@ -1,3 +1,4 @@
+var Notebook = {};
 // <li role="presentation"><a role="menuitem" tabindex="-1" href="#">CSS</a></li>	
 Notebook.notebookNavForListNote = ""; // html 为了note list上面和新建时的ul
 Notebook.notebookNavForNewNote = ""; // html 为了note list上面和新建时的ul
@@ -364,7 +365,7 @@ Notebook.toggleToMyNav = function(userId, notebookId) {
 	$("#tagSearch").hide();
 };
 Notebook.changeNotebookNav = function(notebookId) {
-	Notebook.curNotebookId = notebookId;
+	Cache.curNotebookId = notebookId;
 	Notebook.toggleToMyNav();
 	
 	// 1 改变当前的notebook
@@ -403,7 +404,7 @@ Notebook.changeNotebook = function(notebookId, callback) {
 	var me = this;
 	Notebook.changeNotebookNav(notebookId);
 	
-	Notebook.curNotebookId = notebookId;
+	Cache.curNotebookId = notebookId;
 		
 	// 1
 	Editor.saveNoteChange();
@@ -497,7 +498,7 @@ Notebook.changeNotebookForNewNote = function(notebookId) {
 	}
 	
 	Notebook.changeNotebookNav(notebookId, true);
-	Notebook.curNotebookId = notebookId;
+	Cache.curNotebookId = notebookId;
 	
 	var url = "/note/listNotes/";
 	var param = {notebookId: notebookId};
@@ -522,14 +523,14 @@ Notebook.setNotebook2Blog = function(target) {
 	}
 	
 	// 那么, 如果当前是该notebook下, 重新渲染之
-	if(Notebook.curNotebookId == notebookId) {
+	if(Cache.curNotebookId == notebookId) {
 		if(isBlog) {
 			$('.item').addClass('item-b');
 		} else {
 			$('.item').removeClass('item-b');
 		}
 	// 如果当前在所有笔记本下
-	} else if(Notebook.curNotebookId == Notebook.allNotebookId){
+	} else if(Cache.curNotebookId == Cache.latestNotesNotebookId){
 		$("#noteItemList .item").each(function(){
 			var noteId = $(this).attr("noteId");
 			var note = Cache.getNote(noteId);

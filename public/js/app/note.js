@@ -5,18 +5,8 @@
 // 2. note change, save cur, 立即curNoteId = ""!!
 
 // 3. 什么时候设置curNoteId? 是ajax得到内容之后设置
-
+Note = {};
 Note.isReadOnly = false;
-
-// 样式
-Note.clearSelect = function(target) {
-	$(".item").removeClass("item-active");
-};
-Note.selectTarget = function(target) {
-	this.clearSelect();
-	$(target).addClass("item-active");
-	// this.batch.reset();
-};
 
 // 改变note
 // 可能改变的是share note
@@ -104,7 +94,7 @@ Note.clearNoteInfo = function() {
 	Cache.clearCurNoteId();
 	Tag.clearTags();
 	$("#noteTitle").val("");
-	setEditorContent("");
+	Editor.setEditorContent("");
 	
 	// markdown editor
 	/*
@@ -116,17 +106,11 @@ Note.clearNoteInfo = function() {
 	$("#noteRead").hide();
 };
 
-// 清除noteList导航
-Note.clearNoteList = function() {
-	NoteList.noteItemListO.html(""); // 清空
-};
-
 // 清空所有, 在转换notebook时使用
 Note.clearAll = function() {
 	// 当前的笔记清空掉
-	
 	Note.clearNoteInfo();
-	Note.clearNoteList();
+	NoteList.noteItemListO.html(""); // 清空
 };
 
 Note.renderNote = function(note) {
@@ -145,7 +129,7 @@ Note.renderNote = function(note) {
 // render content
 Note.renderNoteContent = function(content) {
 
-	setEditorContent(content.Content, content.IsMarkdown, content.Preview, function() {
+	Editor.setEditorContent(content.Content, content.IsMarkdown, content.Preview, function() {
 		Cache.setCurNoteId(content.NoteId);
 		Note.toggleReadOnly();
 	});
@@ -169,42 +153,7 @@ Note.hideEditorMask = function() {
 	$("#editorMask").css("z-index", -10).hide();
 };
 
-//更改notes的排序类型
-var $sorterStyles = $('.sorter-style');
-Note.checkSorter = function (sorterType) {
-	// UC无痕浏览
-	if (!sorterType) {
-		sorterType = 'dateUpdatedDESC';
-	}
-	var $selected = $('.sorter-' + sorterType);
-	if ($selected.is('.checked')) {
-		return;
-	}
-	$sorterStyles.removeClass('checked');
-	$selected.addClass('checked');
-};
-// 重新设置sorter, 此时要重新render
-// sortType = dateCreatedASC dateCreatedDESC
-Note.setNotesSorter = function (e) {
-	var sorterType = $(e.currentTarget).data('sorter');
-	if (!sorterType) {
-		sorterType = 'dateUpdatedDESC';
-	}
-	localStorage.setItem("sorterType", sorterType);
-	// alert(localStorage.getItem("sorterType"));
-	Note.checkSorter(sorterType);
 
-    // 如果当前是tagSearch, search, star 怎么办?
-	// 重新Render
-    if (Note._isTag || Note._isSearch) {
-        // Note.renderNotesAndFirstOneContent(Note._everNotes, false);
-    } else {
-        // 其实这里也可以用Note._everNotes, 主要是为了缓存数据
-        Notebook.changeNotebook(Notebook.curNotebookId);
-    }
-    // Note.renderNotesAndTargetNote(Note._everNotes, false, false);
-	// Api.writeConfig(Config);
-};
 
 
 
@@ -224,7 +173,7 @@ Note.newNote = function(notebookId, fromUserId, isMarkdown) {
 	}
 
 	// 切换编辑器
-	switchEditor(isMarkdown);
+	Editor.switchEditor(isMarkdown);
 	Note.hideEditorMask();
 
 	// 防止从共享read only跳到添加
@@ -277,7 +226,8 @@ Note.newNote = function(notebookId, fromUserId, isMarkdown) {
 	}
 	
 	// 是否在当前notebook下, 不是则切换过去, 并得到该notebook下所有的notes, 追加到后面!
-	if(!Notebook.isCurNotebook(notebookId)) {
+	var curNotebookId = Cache.curNotebookId;
+	if(notebookId != curNotebookId) {
 		// 先清空所有
 		Note.clearAll();
 		
@@ -286,18 +236,19 @@ Note.newNote = function(notebookId, fromUserId, isMarkdown) {
 		
 		// 改变为当前的notebookId
 		// 会得到该notebookId的其它笔记
+		Notebook.changeNotebookForNewNote(notebookId);
 	} else {
 		// 插入到第一个位置
 		NoteList.noteItemListO.prepend(newItem);
 	}
 
-	Note.selectTarget($(tt('[noteId="?"]', note.NoteId)));
+	NoteList.selectTarget($(tt('[noteId="?"]', note.NoteId)));
 
 	$("#noteTitle").focus();
 	
 	Note.renderNote(note);
 	Note.renderNoteContent(note);
-	Cache.setCurrentNoteId(note.NoteId);
+	Cache.setCurNoteId(note.NoteId);
 
 	// 更新数量
 	Notebook.incrNotebookNumberNotes(notebookId)
@@ -415,14 +366,14 @@ Note.searchNote = function() {
 	
 	// 发送请求之
 	// 先取消上一个
-	showLoading();
+	$("#loading").css("visibility", "visible");
 	Notebook.showNoteAndEditorLoading();
 
 	Note.listIsInTagOrSearch(false, true);
 	$("#tagSearch").hide();
 
 	Note.lastSearch = $.post("/note/searchNote", {key: val}, function(notes) {
-		hideLoading();
+		$("#loading").css("visibility", "hidden");
 		Notebook.hideNoteAndEditorLoading();
 		if(notes) {
 			// 成功后设为空
@@ -598,9 +549,6 @@ Note.getPostUrl = function (note) {
 	return UserInfo.PostUrl + '/' + urlTitle;
 };
 
-
-
-
 //------------------- 事件
 $(function() {
 
@@ -614,7 +562,7 @@ $(function() {
 	});
 	$("#newNoteMarkdownBtn, #editorMask .markdown").click(function() {
 		var notebookId = $("#curNotebookForNewNote").attr('notebookId');
-		Note.newNote(notebookId, false, "", true);
+		Note.newNote(notebookId, "", true);
 	});
 	$("#searchNotebookForList").keyup(function() {
 		var key = $(this).val();

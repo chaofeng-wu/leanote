@@ -150,7 +150,7 @@ var Resize = {
 				self.set3ColumnsWidth(notebookWidth, noteListWidth);
 			}
 	
-			resizeEditor();
+			Editor.resizeEditor();
 		}
 	},
 

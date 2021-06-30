@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-27 17:47:48
- * @LastEditTime: 2021-06-28 17:03:00
+ * @LastEditTime: 2021-06-29 16:17:42
  * @FilePath: /leanote/public/js/app/editor.js
  */
 Editor = {};
@@ -9,14 +9,14 @@ Editor = {};
 // 有tinymce得到的content有<html>包围
 // 总会出现<p>&nbsp;<br></p>, 原因, setContent('<p><br data-mce-bogus="1" /></p>') 会设置成 <p> <br></p>
 // 所以, 要在getContent时, 当是<p><br data-mce-bogus="1"></p>, 返回 <p><br/></p>
-function getEditorContent(isMarkdown) {
-	var content = _getEditorContent(isMarkdown);
+Editor.getEditorContent = function(isMarkdown) {
+	var content = Editor._getEditorContent(isMarkdown);
 	if (content === '<p><br data-mce-bogus="1"></p>') {
 		return '<p><br></p>';
 	}
 	return content;
 }
-function _getEditorContent(isMarkdown) {
+Editor._getEditorContent = function(isMarkdown) {
 	if(!isMarkdown) {
 		var editor = tinymce.activeEditor;
 		if(editor) {
@@ -35,7 +35,7 @@ function _getEditorContent(isMarkdown) {
 					if(aceEditor) {
 						var val = aceEditor.getValue();
 						// 表示有错
-						if(isAceError(val)) {
+						if(LeaAce.isAceError(val)) {
 							val = pre.html();
 						}
 						val = val.replace(/</g, '&lt').replace(/>/g, '&gt');
@@ -82,6 +82,125 @@ function _getEditorContent(isMarkdown) {
 		// return [$("#wmd-input").val(), $("#wmd-preview").html()]
 		return [MD.getContent(), '<div>' + $("#preview-contents").html() + '</div>']
 	}
+}
+
+//切换编辑器
+Editor.switchEditor = function(isMarkdown) {
+	LEA.isM = isMarkdown;
+	// 富文本永远是2
+	if(!isMarkdown) {
+		$("#editor").show();
+		$("#mdEditor").css("z-index", 1).hide();
+		
+		// 刚开始没有
+		$("#leanoteNav").show();
+	} else {
+		$("#mdEditor").css("z-index", 3).show();
+		
+		$("#leanoteNav").hide();
+	}
+}
+
+// editor 设置内容
+// 可能是tinymce还没有渲染成功
+var previewToken = "<div style='display: none'>FORTOKEN</div>"
+var clearIntervalForSetContent;
+Editor.setEditorContent = function(content, isMarkdown, preview, callback) {
+	if(!content) {
+		content = "";
+	}
+	if(clearIntervalForSetContent) {
+		clearInterval(clearIntervalForSetContent);
+	}
+	if(!isMarkdown) {
+		// 先destroy之前的ace
+		/*
+		if(typeof tinymce != "undefined" && tinymce.activeEditor) {
+			var editor = tinymce.activeEditor;
+			var everContent = $(editor.getBody());
+			if(everContent) {
+				LeaAce.destroyAceFromContent(everContent);
+			}
+		}
+		*/
+		// $("#editorContent").html(content);
+		// 不能先setHtml, 因为在tinymce的setContent前要获取之前的content, destory ACE
+		if(typeof tinymce != "undefined" && tinymce.activeEditor) {
+			var editor = tinymce.activeEditor;
+			editor.setContent(content);
+			callback && callback();
+			editor.undoManager.clear(); // 4-7修复BUG
+		} else {
+			// 等下再设置
+			clearIntervalForSetContent = setTimeout(function() {
+				Editor.setEditorContent(content, false, false, callback);
+			}, 100);
+		}
+	} else {
+	/*
+		$("#wmd-input").val(content);
+		$("#wmd-preview").html(""); // 防止先点有的, 再点tinymce再点没内容的
+		if(!content || preview) { // 没有内容就不要解析了
+			$("#wmd-preview").html(preview).css("height", "auto");
+			if(ScrollLink) {
+				ScrollLink.onPreviewFinished(); // 告诉scroll preview结束了
+			}
+		} else {
+			// 还要清空preview
+			if(MarkdownEditor) {
+				$("#wmd-preview").html(previewToken + "<div style='text-align:center; padding: 10px 0;'><img src='http://leanote.com/images/loading-24.gif' /> 正在转换...</div>");
+				MarkdownEditor.refreshPreview();
+			} else {
+				// 等下再设置
+				clearIntervalForSetContent = setTimeout(function() {
+					setEditorContent(content, true, preview);
+				}, 200);
+			}
+		}
+	*/
+		if(MD) {
+			MD.setContent(content);
+			MD.clearUndo && MD.clearUndo();
+			callback && callback();
+		} else {
+			clearIntervalForSetContent = setTimeout(function() {
+				Editor.setEditorContent(content, true, false, callback);
+			}, 100);
+		}
+	}
+}
+
+// preview是否为空
+Editor.previewIsEmpty = function(preview) {
+	if(!preview || preview.substr(0, previewToken.length) == previewToken) {
+		return true;
+	}
+	return false;
+}
+
+//-----------------------------------------
+Editor.resizeEditor = function(second) {
+	LEA.isM && MD && MD.resize && MD.resize();
+	return;
+	var ifrParent = $("#editorContent_ifr").parent();
+    ifrParent.css("overflow", "auto");
+    var height = $("#editorContent").height();
+    ifrParent.height(height);
+    // log(height + '---------------------------------------')
+    $("#editorContent_ifr").height(height);
+
+    // life 12.9
+    // inline editor
+    // $("#editorContent").css("top", $("#mceToolbar").height());
+    
+    /*
+    // 第一次时可能会被改变
+    if(!second) {
+		setTimeout(function() {
+			resizeEditorHeight(true);
+		}, 1000);
+    }
+    */
 }
 
 // 当前的note是否改变过了?
@@ -143,13 +262,13 @@ Editor.isNoteChanged = function(force, isRefreshOrCtrls) {
 	// 内容的比较
 
 	// 如果是markdown返回[content, preview]
-	var contents = getEditorContent(curNote.IsMarkdown);
+	var contents = this.getEditorContent(curNote.IsMarkdown);
 	var content, preview;
 	if (isArray(contents)) {
 		content = contents[0];
 		preview = contents[1];
 		// preview可能没来得到及解析
-		if (content && previewIsEmpty(preview) && Converter) {
+		if (content && Editor.previewIsEmpty(preview) && Converter) {
 			preview = Converter.makeHtml(content);
 		}
 		if(!content) {
@@ -193,7 +312,7 @@ Editor.isNoteChanged = function(force, isRefreshOrCtrls) {
 
 Editor.getCurEditorContent = function(){
 	var cacheNote = Cache.getCurNote(); 
-	var contents = getEditorContent(cacheNote.IsMarkdown);
+	var contents = this.getEditorContent(cacheNote.IsMarkdown);
 	return contents[0];
 }
 
@@ -275,7 +394,7 @@ Editor.saveChangeInMindmap = function(markdown){
 
 	cacheNote.Content = markdown;
 	// cacheNote.preview = Converter.makeHtml(markdown);
-	setEditorContent(cacheNote.Content, cacheNote.IsMarkdown, cacheNote.Preview);
+	Editor.setEditorContent(cacheNote.Content, cacheNote.IsMarkdown, cacheNote.Preview);
 
 	var hasChanged = {
 		hasChanged: true, // 总的是否有改变
@@ -296,7 +415,7 @@ Editor.initEditor = function() {
 	// toolbar 下拉扩展, 也要resizeEditor
 	var mceToobarEverHeight = 0;
 	$("#moreBtn").click(function() {
-		saveBookmark();
+		LEA.saveBookmark();
 		var $editor = $('#editor');
 		if($editor.hasClass('all-tool')) {
 			$editor.removeClass('all-tool');
@@ -304,7 +423,7 @@ Editor.initEditor = function() {
 			$editor.addClass('all-tool');
 		}
 
-		restoreBookmark();
+		LEA.restoreBookmark();
 	});
 
 	// 初始化编辑器

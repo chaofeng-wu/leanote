@@ -8,17 +8,8 @@
 if(typeof LEA === 'undefined') {
 	var LEA = {};
 }
-// 命名空间
-var Notebook = {
-	cache: {}, // notebookId => {Title, Seq}
-}
-var Note = {
-	cache: {}, // noteId => {Title, Tags, Content, Desc}
-};
 // var UserInfo = {}; // 博客有问题, 会覆盖
 var Tag = {};
-var Notebook = {};
-var Share = {};
 var Mobile = {}; // 手机端处理
 var LeaAce = {};
 
@@ -40,6 +31,14 @@ function trimLeft(str, substr) {
 	}
 	return str;
 }
+
+function trimTitle(title) {
+	if(!title || typeof title != 'string') {
+		return '';
+	}
+	return title.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+	// return title.replace(/<.*?script.*?>/g, '');
+};
 
 function json(str) {
 	return eval("(" + str + ")")
@@ -156,9 +155,6 @@ function formSerializeDataToJson(formSerializeData) {
 	return $.extend(datas, arrObj);
 }
 
-
-
-
 function findParents(target, selector) {
 	if($(target).is(selector)) {
 		return $(target);
@@ -172,8 +168,6 @@ function findParents(target, selector) {
 	}
 	return null;
 }
-
-
 
 function getVendorPrefix() {
   // 使用body是为了避免在还需要传入元素
@@ -191,198 +185,6 @@ function getVendorPrefix() {
   }
 }
 
-//-----------------
-
-//切换编辑器
-LEA.isM = false;
-LEA.isMarkdownEditor = function() {
-	return LEA.isM;
-}
-function switchEditor(isMarkdown) {
-	LEA.isM = isMarkdown;
-	// 富文本永远是2
-	if(!isMarkdown) {
-		$("#editor").show();
-		$("#mdEditor").css("z-index", 1).hide();
-		
-		// 刚开始没有
-		$("#leanoteNav").show();
-	} else {
-		$("#mdEditor").css("z-index", 3).show();
-		
-		$("#leanoteNav").hide();
-	}
-}
-
-// editor 设置内容
-// 可能是tinymce还没有渲染成功
-var previewToken = "<div style='display: none'>FORTOKEN</div>"
-var clearIntervalForSetContent;
-function setEditorContent(content, isMarkdown, preview, callback) {
-	if(!content) {
-		content = "";
-	}
-	if(clearIntervalForSetContent) {
-		clearInterval(clearIntervalForSetContent);
-	}
-	if(!isMarkdown) {
-		// 先destroy之前的ace
-		/*
-		if(typeof tinymce != "undefined" && tinymce.activeEditor) {
-			var editor = tinymce.activeEditor;
-			var everContent = $(editor.getBody());
-			if(everContent) {
-				LeaAce.destroyAceFromContent(everContent);
-			}
-		}
-		*/
-		// $("#editorContent").html(content);
-		// 不能先setHtml, 因为在tinymce的setContent前要获取之前的content, destory ACE
-		if(typeof tinymce != "undefined" && tinymce.activeEditor) {
-			var editor = tinymce.activeEditor;
-			editor.setContent(content);
-			callback && callback();
-			editor.undoManager.clear(); // 4-7修复BUG
-		} else {
-			// 等下再设置
-			clearIntervalForSetContent = setTimeout(function() {
-				setEditorContent(content, false, false, callback);
-			}, 100);
-		}
-	} else {
-	/*
-		$("#wmd-input").val(content);
-		$("#wmd-preview").html(""); // 防止先点有的, 再点tinymce再点没内容的
-		if(!content || preview) { // 没有内容就不要解析了
-			$("#wmd-preview").html(preview).css("height", "auto");
-			if(ScrollLink) {
-				ScrollLink.onPreviewFinished(); // 告诉scroll preview结束了
-			}
-		} else {
-			// 还要清空preview
-			if(MarkdownEditor) {
-				$("#wmd-preview").html(previewToken + "<div style='text-align:center; padding: 10px 0;'><img src='http://leanote.com/images/loading-24.gif' /> 正在转换...</div>");
-				MarkdownEditor.refreshPreview();
-			} else {
-				// 等下再设置
-				clearIntervalForSetContent = setTimeout(function() {
-					setEditorContent(content, true, preview);
-				}, 200);
-			}
-		}
-	*/
-		if(MD) {
-			MD.setContent(content);
-			MD.clearUndo && MD.clearUndo();
-			callback && callback();
-		} else {
-			clearIntervalForSetContent = setTimeout(function() {
-				setEditorContent(content, true, false, callback);
-			}, 100);
-		}
-	}
-}
-
-// preview是否为空
-function previewIsEmpty(preview) {
-	if(!preview || preview.substr(0, previewToken.length) == previewToken) {
-		return true;
-	}
-	return false;
-}
-
-// ace的值有误?
-function isAceError(val) {
-	if(!val) {
-		return false;
-	}
-	return val.indexOf('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX') != -1;
-}
-
-
-
-// 禁用编辑
-LEA.editorStatus = true;
-function disableEditor() {
-	var editor = tinymce.activeEditor;
-	if(editor) {
-		editor.hide();
-		LEA.editorStatus = false;
-		$("#mceTollbarMark").show().css("z-index", 1000);
-	}
-	
-	// toolbar 来个遮着...
-}
-function enableEditor() {
-	if(LEA.editorStatus) {
-		return;
-	}
-	$("#mceTollbarMark").css("z-index", -1).hide();
-	var editor = tinymce.activeEditor;
-	if(editor) {
-		editor.show();
-	}
-}
-
-//-----------
-// dialog
-//-----------
-function showDialog(id, options) {
-	$("#leanoteDialog #modalTitle").html(options.title);
-	$("#leanoteDialog .modal-body").html($("#" + id + " .modal-body").html());
-	$("#leanoteDialog .modal-footer").html($("#" + id + " .modal-footer").html());
-	delete options.title;
-	options.show = true;
-	$("#leanoteDialog").modal(options);
-}
-function hideDialog(timeout) {
-	if(!timeout) {
-		timeout = 0;
-	}
-	setTimeout(function() {
-		$("#leanoteDialog").modal('hide');
-	}, timeout);
-}
-
-// 更通用
-function closeDialog() {
-	$(".modal").modal('hide');
-}
-
-// 原生的
-function showDialog2(id, options) {
-	options = options || {};
-	options.show = true;
-	$(id).modal(options);
-}
-function hideDialog2(id, timeout) {
-	if(!timeout) {
-		timeout = 0;
-	}
-	setTimeout(function() {
-		$(id).modal('hide');
-	}, timeout);
-}
-
-// 远程
-function showDialogRemote(url, data) {
-	data = data || {};
-	url += "?";
-	for(var i in data) {
-		url += i + "=" + data[i] + "&";
-	}
-	$("#leanoteDialogRemote").modal({remote: url});
-}
-
-function hideDialogRemote(timeout) {
-	if(timeout) {
-		setTimeout(function() {
-			$("#leanoteDialogRemote").modal('hide');
-		}, timeout);
-	} else {
-		$("#leanoteDialogRemote").modal('hide');
-	}
-}
 //---------------
 // notify
 // 没用
@@ -493,31 +295,6 @@ function getObjectId() {
 	return ObjectId();
 }
 
-//-----------------------------------------
-function resizeEditor(second) {
-	LEA.isM && MD && MD.resize && MD.resize();
-	return;
-	var ifrParent = $("#editorContent_ifr").parent();
-    ifrParent.css("overflow", "auto");
-    var height = $("#editorContent").height();
-    ifrParent.height(height);
-    // log(height + '---------------------------------------')
-    $("#editorContent_ifr").height(height);
-
-    // life 12.9
-    // inline editor
-    // $("#editorContent").css("top", $("#mceToolbar").height());
-    
-    /*
-    // 第一次时可能会被改变
-    if(!second) {
-		setTimeout(function() {
-			resizeEditorHeight(true);
-		}, 1000);
-    }
-    */
-}
-
 //----------
 // msg位置固定
 function showMsg(msg, timeout) {
@@ -592,14 +369,6 @@ function initCopy(aId, postFunc) {
 	clip.on('complete', function(client, args) {
 		postFunc(args);
 	});   
-}
-
-function showLoading() {
-	$("#loading").css("visibility", "visible");
-}
-
-function hideLoading() {
-	$("#loading").css("visibility", "hidden");
 }
 
 // 注销, 先清空cookie
@@ -689,61 +458,6 @@ function getEmailLoginAddress(email) {
 // 返回是否是re.Ok == true
 function reIsOk(re) {
 	return re && typeof re == "object" && re.Ok;
-}
-
-// marker
-// 下拉扩展工具栏用, 点击文档导航用, 切换编辑模式时用
-LEA.bookmark = null;
-LEA.hasBookmark = false;
-function saveBookmark() {
-	try {
-		LEA.bookmark = tinymce.activeEditor.selection.getBookmark(); // 光标, 为了处理后重新定位到那个位置
-		// 如果之前没有focus, 则会在文档开头设置bookmark, 添加一行, 不行.
-		// $p不是<p>, 很诡异
-		// 6-5
-		if(LEA.bookmark && LEA.bookmark.id) {
-			var $ic = $($("#editorContent_ifr").contents());
-			var $body = $ic.find("body");
-			var $p = $body.children().eq(0);
-			// 找到
-			if($p.is("span")) {
-				var $children = $p;
-				var $c = $children.eq(0);
-				if($c.attr("id") == LEA.bookmark.id + "_start") {
-					LEA.hasBookmark = false;
-					$c.remove();
-				} else {
-					LEA.hasBookmark = true;
-				}
-			} else if($p.is("p")) {
-				var $children = $p.children();
-				if($children.length == 1 && $.trim($p.text()) == "") {
-					var $c = $children.eq(0);
-					if($c.attr("id") == LEA.bookmark.id + "_start") {
-						LEA.hasBookmark = false;
-						$p.remove();
-					} else {
-						LEA.hasBookmark = true;
-					}
-				} else {
-					LEA.hasBookmark = true;
-				}
-			}
-		}
-		
-	} catch(e) {
-	}
-}
-function restoreBookmark() {
-	try {
-		if(LEA.hasBookmark) {
-			// 必须要focus()!!!
-			var editor = tinymce.activeEditor;
-			editor.focus();
-			editor.selection.moveToBookmark(LEA.bookmark);
-		}
-	} catch(e) {
-	}
 }
 
 // 是否是手机浏览器
@@ -1082,10 +796,63 @@ function setHash(key, value) {
 	location.href = "#" + str;
 }
 
-var trimTitle = function(title) {
-	if(!title || typeof title != 'string') {
-		return '';
+
+//-----------
+// dialog
+//-----------
+function showDialog(id, options) {
+	$("#leanoteDialog #modalTitle").html(options.title);
+	$("#leanoteDialog .modal-body").html($("#" + id + " .modal-body").html());
+	$("#leanoteDialog .modal-footer").html($("#" + id + " .modal-footer").html());
+	delete options.title;
+	options.show = true;
+	$("#leanoteDialog").modal(options);
+}
+function hideDialog(timeout) {
+	if(!timeout) {
+		timeout = 0;
 	}
-	return title.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-	// return title.replace(/<.*?script.*?>/g, '');
-};
+	setTimeout(function() {
+		$("#leanoteDialog").modal('hide');
+	}, timeout);
+}
+
+// 更通用
+function closeDialog() {
+	$(".modal").modal('hide');
+}
+
+// 原生的
+function showDialog2(id, options) {
+	options = options || {};
+	options.show = true;
+	$(id).modal(options);
+}
+function hideDialog2(id, timeout) {
+	if(!timeout) {
+		timeout = 0;
+	}
+	setTimeout(function() {
+		$(id).modal('hide');
+	}, timeout);
+}
+
+// 远程
+function showDialogRemote(url, data) {
+	data = data || {};
+	url += "?";
+	for(var i in data) {
+		url += i + "=" + data[i] + "&";
+	}
+	$("#leanoteDialogRemote").modal({remote: url});
+}
+
+function hideDialogRemote(timeout) {
+	if(timeout) {
+		setTimeout(function() {
+			$("#leanoteDialogRemote").modal('hide');
+		}, timeout);
+	} else {
+		$("#leanoteDialogRemote").modal('hide');
+	}
+}

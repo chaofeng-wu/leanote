@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-26 15:00:01
- * @LastEditTime: 2021-06-28 17:59:04
+ * @LastEditTime: 2021-06-29 17:34:18
  * @FilePath: /leanote/public/js/app/main.js
  */
 
@@ -18,7 +18,7 @@ function initActionListeners() {
     // 窗口缩放时
 	$(window).resize(function() {
 		Mobile.isMobile();
-		resizeEditor();
+		Editor.resizeEditor();
 	});
 	
 
@@ -74,7 +74,7 @@ function initActionListeners() {
 			id = arr[1];
 		}
 		$("#themeLink").attr("href", LEA.sPath + "/css/theme/" + val + ".css?id=" + id);
-		ajaxPost("/user/updateTheme", {theme: val}, function(re) {
+		Net.ajaxPost("/user/updateTheme", {theme: val}, function(re) {
 			if(reIsOk(re)) {
 				UserInfo.Theme = val
 			}
@@ -89,7 +89,7 @@ function initActionListeners() {
 	
 	// 左侧隐藏或展示
 	function updateLeftIsMin(is) {
-		ajaxGet("/user/updateLeftIsMin", {leftIsMin: is})
+		Net.ajaxGet("/user/updateLeftIsMin", {leftIsMin: is})
 	}
 
 	// 最小化左侧
