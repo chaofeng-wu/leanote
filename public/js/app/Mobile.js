@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-15 15:03:33
- * @LastEditTime: 2021-06-28 17:12:26
+ * @LastEditTime: 2021-07-01 13:47:30
  * @FilePath: /leanote/public/js/app/Mobile.js
  */
 //--------------------------
@@ -20,7 +20,7 @@ Mobile = {
 		if(hash.indexOf("noteId") != -1) {
 			self.toEditor(false);
 			var noteId = hash.substr(8);
-			NoteList.changeNote(noteId, false, false);
+			NoteList.changeNote(noteId);
 		} else {
 			// 笔记本和笔记列表
 			self.toNormal(false);

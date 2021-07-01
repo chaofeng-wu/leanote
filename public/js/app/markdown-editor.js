@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-30 10:44:24
- * @LastEditTime: 2021-06-30 18:19:23
+ * @LastEditTime: 2021-07-01 14:36:18
  * @FilePath: /leanote/public/js/app/markdown-editor.js
  */
 
@@ -53,14 +53,18 @@ var MarkdownEditor = editormd("test-editor", {
     onload               : function() { 
         this.setMarkdown(this.markdown);
         MarkdownEditor.previewing();
+        MarkdownEditor.isPreviewing = true;
         MarkdownEditor.loaded = true;
+        MarkdownEditor.resize();
     },
     onresize             : function() {},
     onchange             : function() {},
     onwatch              : null,
     onunwatch            : null,
     onpreviewing         : function() {},
-    onpreviewed          : function() {},
+    onpreviewed          : function() {
+        MarkdownEditor.isPreviewing = false;
+    },
     onfullscreen         : function() {},
     onfullscreenExit     : function() {
     },
@@ -146,22 +150,33 @@ MarkdownEditor.setEditorContent = function(content,callback){
             MarkdownEditor.markdown = content;
         }else{
             MarkdownEditor.setMarkdown(content);
+            MarkdownEditor.toggleMdReadOnly();
+            MarkdownEditor.resize();
         }
         callback && callback();
     }
 }
 
+MarkdownEditor.isPreviewing = false; // 用来记录preview的状态
 MarkdownEditor.toggleWriteable = function(){
-    // MarkdownEditor.previewed();
+    if (!MarkdownEditor.isPreviewing){
+        return;
+    }
     MarkdownEditor.previewing();
     MarkdownEditor.focus();
     LEA.readOnly = false;
+    MarkdownEditor.isPreviewing = false;
 }
 
 MarkdownEditor.loaded = false;
+
 MarkdownEditor.toggleMdReadOnly = function(){
+    if (MarkdownEditor.isPreviewing){
+        return;
+    }
     if (MarkdownEditor.loaded) {
         MarkdownEditor.previewing();
+        MarkdownEditor.isPreviewing = true;
     }
 
     $('#mdInfoToolbar .created-time').html(goNowToDatetime(note.CreatedTime));

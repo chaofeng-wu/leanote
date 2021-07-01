@@ -222,15 +222,19 @@ Notebook.renderNotebooks = function(notebooks) {
 			
 	// 缓存所有notebooks信息
 	if(!isEmpty(notebooks)) {
-		Cache.curNotebookId = notebooks[0].NotebookId;
+		Cache.curNotebookId = curNotebookId;
 		Cache.addNotebooksToNotebooksDict(notebooks);
+		var notebook = Cache.getCurNotebook();
+		if (notebook) {
+			$("#curNotebookForListNote").html(notebook.Title);
+		}
 	}
 	
 	// 渲染nav
 	Notebook.renderNav();
-	
+
 	// 渲染第一个notebook作为当前
-	Notebook.changeNotebookNavForNewNote(notebooks[0].NotebookId);
+	Notebook.changeNotebookNavForNewNote(curNotebookId);
 }
 
 // 展开到笔记本
@@ -329,9 +333,14 @@ Notebook.selectNotebook = function(target) {
 Notebook.changeNotebookNavForNewNote = function(notebookId, title) {
 	// 没有notebookId, 则选择第1个notebook
 	// 第一个是全部笔记
-	if(!notebookId || !title) {
+	if(!notebookId ) {
 		var notebook = Cache.notebooksList[0];
 		notebookId = notebook.NotebookId;
+		title = notebook.Title;
+	}
+
+	if (!title) {
+		var notebook = Cache.getCurNotebook();
 		title = notebook.Title;
 	}
 
@@ -410,7 +419,7 @@ Notebook.changeNotebook = function(notebookId, callback) {
 	Editor.saveNoteChange();
 	
 	// 2 先清空所有
-	Note.clearAll();
+	NoteList.clearAll();
 	
 	var url = "/note/listNotes/";
 	var param = {notebookId: notebookId};

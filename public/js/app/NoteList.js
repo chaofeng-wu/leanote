@@ -1,17 +1,22 @@
 
 NoteList = {};
+NoteList.noteTypeTpl = 'Note=Type';
 NoteList.itemIsBlog = '<div class="item-blog"><i class="fa fa-bold" title="blog"></i></div><div class="item-setting"><i class="fa fa-cog" title="setting"></i></div>';
 // for render
 NoteList.itemTplNoImg = '<li href="#" class="item ?" data-seq="?" noteId="?">'
-NoteList.itemTplNoImg += NoteList.itemIsBlog +'<div class="item-desc"><p class="item-title">?</p><p class="item-info"><i class="fa fa-book"></i> <span class="note-notebook">?</span> <i class="fa fa-clock-o"></i> <span class="updated-time">?</span></p><p class="desc">?</p></div></li>';
+NoteList.itemTplNoImg += NoteList.itemIsBlog +'<div class="item-desc"><p class="item-title">?</p><p class="item-info">'+NoteList.noteTypeTpl+'<span class="note-notebook">?</span> <i class="fa fa-clock-o"></i> <span class="updated-time">?</span></p><p class="desc">?</p></div></li>';
 
 // 有image
 NoteList.itemTpl = '<li href="#" class="item ? item-image" data-seq="?" noteId="?"><div class="item-thumb" style=""><img src="?"/></div>'
-NoteList.itemTpl +=NoteList.itemIsBlog + '<div class="item-desc" style=""><p class="item-title">?</p><p class="item-info"><i class="fa fa-book"></i> <span class="note-notebook">?</span> <i class="fa fa-clock-o"></i> <span class="updated-time">?</span></p><p class="desc">?</p></div></li>';
+NoteList.itemTpl +=NoteList.itemIsBlog + '<div class="item-desc" style=""><p class="item-title">?</p><p class="item-info">'+NoteList.noteTypeTpl+'<span class="note-notebook">?</span> <i class="fa fa-clock-o"></i> <span class="updated-time">?</span></p><p class="desc">?</p></div></li>';
 
 // for new
 NoteList.newItemTpl = '<li href="#" class="item item-active ?" data-seq="?" fromUserId="?" noteId="?">'
-NoteList.newItemTpl += NoteList.itemIsBlog + '<div class="item-desc" style="right: 0px;"><p class="item-title">?</p><p class="item-info"><i class="fa fa-book"></i> <span class="note-notebook">?</span> <i class="fa fa-clock-o"></i> <span class="updated-time">?</span></p><p class="desc">?</p></div></li>';
+NoteList.newItemTpl += NoteList.itemIsBlog + '<div class="item-desc" style="right: 0px;"><p class="item-title">?</p><p class="item-info">'+NoteList.noteTypeTpl+'<span class="note-notebook">?</span> <i class="fa fa-clock-o"></i> <span class="updated-time">?</span></p><p class="desc">?</p></div></li>';
+
+
+NoteList.fullTextTpl = '<i class="fa fa-book"></i>'
+NoteList.markdownTpl = '<i class="fab fa-markdown"></i>'
 
 NoteList.noteItemListO = $("#noteItemList");
 
@@ -19,7 +24,6 @@ NoteList.$itemList = $('#noteItemList');
 NoteList.getTargetById = function(noteId) {
 	return this.$itemList.find('li[noteId="' + noteId + '"]');
 };
-
 
 /**
  * @description: called by Notebook, render 所有notes, 和第一个note的content
@@ -46,7 +50,13 @@ NoteList.clearSeqForNew = function () {
 NoteList.newNoteSeq = function () {
 	return --this._seqForNew;
 };
-// 这里如果notes过多>100个将会很慢!!, 使用setTimeout来分解
+
+/**
+ * @description: 渲染notelist中的note
+ * @param {*} notes
+ * @param {*} forNewNote
+ * @return {*}
+ */
 NoteList.renderNotesC = 0;
 NoteList.renderNotes = function(notes, forNewNote) {
 	var renderNotesC = ++NoteList.renderNotesC;
@@ -95,6 +105,14 @@ NoteList.renderNotes = function(notes, forNewNote) {
 			})(i), i*2000);
 	}
 };
+
+/**
+ * @description: 分批次渲染notelist中的note
+ * @param {*} notes
+ * @param {*} forNewNote
+ * @param {*} tang
+ * @return {*}
+ */
 NoteList._renderNotes = function(notes, forNewNote, tang) { // 第几趟
 	var len = notes.length;
 	for(var i = (tang-1)*20; i < len && i < tang*20; ++i) {
@@ -113,6 +131,13 @@ NoteList._renderNotes = function(notes, forNewNote, tang) { // 第几趟
 		} else {
 			tmp = tt(NoteList.itemTplNoImg, classes, i, note.NoteId, note.Title, Cache.getNotebookTitleById(note.NotebookId), goNowToDatetime(note.UpdatedTime), note.Desc);
 		}
+
+		if (note.IsMarkdown) {
+			tmp = tmp.replace(NoteList.noteTypeTpl, NoteList.markdownTpl);
+		}else{
+			tmp = tmp.replace(NoteList.noteTypeTpl, NoteList.fullTextTpl);
+		}
+
 		tmp = $(tmp);
 		if(!note.IsBlog) {
 			tmp.removeClass('item-b');
@@ -123,12 +148,12 @@ NoteList._renderNotes = function(notes, forNewNote, tang) { // 第几趟
 	}
 };
 
-NoteList.contextmenu = null;
 /**
  * @description: 初始化notelist的Contextmenu
  * @param {*}
  * @return {*}
  */
+NoteList.contextmenu = null;
 NoteList.initContextmenu = function() {
 	var self = NoteList;
 	if(NoteList.contextmenu) {
@@ -508,40 +533,49 @@ NoteList.copyNote = function(target, data) {
 	});
 };
 
-
-// 点击notebook时调用, 渲染第一个笔记
+/**
+ * @description: 切换note时调用
+ * @param {*} selectNoteId
+ * @param {*} callback
+ * @return {*}
+ */
 NoteList.contentAjax = null;
 NoteList.contentAjaxSeq = 1;
-NoteList.changeNote = function(selectNoteId, needSaveChanged, callback) {
+NoteList.changeNote = function(selectNoteId, callback) {
 	if (!selectNoteId) {
 		return;
 	}
 
-	// 0
-	var target = NoteList.getTargetById(selectNoteId);
-	NoteList.selectTarget(target);
+	// 1 停止计时
+	Timer.stopInterval();
+
+	// 2 切换之前先保存
+	Editor.saveNoteChange();
 	
-	// 2. 设空, 防止在内容得到之前又发生保存
+	// 3 设空, 防止在内容得到之前又发生保存
 	Cache.clearCurNoteId();
 	
-	// 2 得到现在的
-	// ajax之
+	// 4 获取选中的note
+	var target = NoteList.getTargetById(selectNoteId);
+	NoteList.selectTarget(target);
 	var cacheNote = Cache.getNote(selectNoteId);
 	if (!cacheNote) {
 		return;
 	}
-	
-	Note.hideReadOnly();
-	Note.renderNote(cacheNote);
 
-	// 这里要切换编辑器
+	// 5.渲染note的title和tag
+	Note.renderNoteInfo(cacheNote);
+
+	// 6.切换编辑器
 	Editor.switchEditor(cacheNote.IsMarkdown);
 
-	// 发送事件
+	// 7.发送事件
 	LEA.trigger('noteChanged', cacheNote);
 	
+	// 8.渲染附件的数量
 	Attach.renderNoteAttachNum(selectNoteId, true);
 	
+	// 9.替换界面中的content和url
 	NoteList.contentAjaxSeq++;
 	var seq = NoteList.contentAjaxSeq;
 
@@ -560,12 +594,13 @@ NoteList.changeNote = function(selectNoteId, needSaveChanged, callback) {
 		
 		callback && callback(ret);
 	}
-	
+	// 9.1 如果缓存的数据不空，直接设置内容
 	if(cacheNote.Content) {
 		setContent(cacheNote, seq);
 		return;
 	}
 
+	// 9.2 如果缓存数据为空，从server上拉取数据
 	var url = "/note/getNoteContent";
 	var param = {noteId: selectNoteId};
 	
@@ -582,7 +617,11 @@ NoteList.changeNote = function(selectNoteId, needSaveChanged, callback) {
 	})(seq));
 };
 
-// 要删除noteIds, 找下一个可以的
+/**
+ * @description: 要删除noteIds, 找下一个可以的
+ * @param {*} noteIds
+ * @return {*}
+ */
 NoteList.changeToNextSkipNotes = function(noteIds) {
 	if (isEmpty(noteIds)) {
 		return;
@@ -633,18 +672,31 @@ NoteList.changeToNextSkipNotes = function(noteIds) {
 	}
 };
 
-// NoteList的选中样式
+/**
+ * @description: 清除选中样式
+ * @param {*} target
+ * @return {*}
+ */
 NoteList.clearSelect = function(target) {
 	$(".item").removeClass("item-active");
 };
+
+/**
+ * @description: 设置选中样式
+ * @param {*} target
+ * @return {*}
+ */
 NoteList.selectTarget = function(target) {
 	this.clearSelect();
 	$(target).addClass("item-active");
 	// this.batch.reset();
 };
 
-
-// 批量操作
+/**
+ * @description: 批量获取noteid
+ * @param {*}
+ * @return {*}
+ */
 NoteList.inBatch = false;
 NoteList.getBatchNoteIds = function () {
 	var noteIds = [];
@@ -654,6 +706,12 @@ NoteList.getBatchNoteIds = function () {
 	}
 	return noteIds;
 };
+
+/**
+ * @description: 批量操作note
+ * @param {*}
+ * @return {*}
+ */
 NoteList.batch = {
 	$noteItemList: $("#noteItemList"),
 	
@@ -1049,9 +1107,9 @@ NoteList.batch = {
 };
 
 /**
- * 切换视图
- * @param  {[type]} e [description]
- * @return {[type]}   [description]
+ * @description: 切换notelist的摘要视图和列表视图
+ * @param {*} e
+ * @return {*}
  */
 NoteList.toggleView = function (e) {
 	var view;
@@ -1075,9 +1133,11 @@ NoteList.toggleView = function (e) {
 	$('.view-' + view).addClass('checked');
 };
 
-// 更改信息到左侧
-// 定时更改 当前正在编辑的信息到左侧导航
-// 或change select. 之前的note, 已经改变了
+/**
+ * @description: 更改信息到左侧，定时更改 当前正在编辑的信息到左侧导航，或change select. 之前的note, 已经改变了
+ * @param {*} note
+ * @return {*}
+ */
 NoteList.renderChangedNote = function(note) {
 	if(!note) {
 		return;
@@ -1107,8 +1167,12 @@ NoteList.renderChangedNote = function(note) {
 	}
 };
 
-//更改notes的排序类型
-var $sorterStyles = $('.sorter-style');
+/**
+ * @description: 更改排序类型的视图，在选中的类型前面打勾
+ * @param {*} sorterType
+ * @return {*}
+ */
+ var $sorterStyles = $('.sorter-style');
 NoteList.checkSorter = function (sorterType) {
 	// UC无痕浏览
 	if (!sorterType) {
@@ -1121,8 +1185,12 @@ NoteList.checkSorter = function (sorterType) {
 	$sorterStyles.removeClass('checked');
 	$selected.addClass('checked');
 };
-// 重新设置sorter, 此时要重新render
-// sortType = dateCreatedASC dateCreatedDESC
+
+/**
+ * @description: 重新设置sorter, 此时要重新render
+ * @param {*} e
+ * @return {*}
+ */
 NoteList.setNotesSorter = function (e) {
 	var sorterType = $(e.currentTarget).data('sorter');
 	if (!sorterType) {
@@ -1144,6 +1212,16 @@ NoteList.setNotesSorter = function (e) {
 	// Api.writeConfig(Config);
 };
 
+/**
+ * @description: 清空所有, 在转换notebook时使用
+ * @param {*}
+ * @return {*}
+ */
+NoteList.clearAll = function() {
+	// 当前的笔记清空掉
+	Note.clearNoteInfo();
+	NoteList.noteItemListO.html(""); // 清空
+};
 
 $(function() {
 	//-----------------

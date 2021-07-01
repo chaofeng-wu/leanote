@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-27 17:18:43
- * @LastEditTime: 2021-06-28 14:41:49
+ * @LastEditTime: 2021-07-01 10:51:02
  * @FilePath: /leanote/public/js/app/net.js
  */
 //管理网络请求，把所有的请求函数写在这个文件中方便管理
@@ -177,7 +177,6 @@ Net.Pjax = {
 		if(!note) {
 			return;
 		}
-		var isShare = note.Perm != undefined;
 		
 		var notebookId = note.NotebookId;
 		// 如果是在当前notebook下, 就不要转换notebook了
@@ -187,22 +186,12 @@ Net.Pjax = {
 			return;
 		}
 		
-		// 自己的
-		if(!isShare) {
-			// 先切换到notebook下, 得到notes列表, 再changeNote
-			Notebook.changeNotebook(notebookId, function(notes) {
-				NoteList.renderNotes(notes);
-				// 不push state
-				Note.changeNoteForPjax(noteId, false, true);
-			});
-		// 共享笔记
-		} else {
-			Share.changeNotebook(note.UserId, notebookId, function(notes) {
-				NoteList.renderNotes(notes);
-				// 不push state
-				Note.changeNoteForPjax(noteId, false, true);
-			});
-		}
+		// 先切换到notebook下, 得到notes列表, 再changeNote
+		Notebook.changeNotebook(notebookId, function(notes) {
+			NoteList.renderNotes(notes);
+			// 不push state
+			Note.changeNoteForPjax(noteId, false, true);
+		});
 	},
 		
 	// ajax后调用

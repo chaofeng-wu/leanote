@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-27 17:47:48
- * @LastEditTime: 2021-06-30 18:05:16
+ * @LastEditTime: 2021-07-01 14:29:58
  * @FilePath: /leanote/public/js/app/editor-helper.js
  */
 Editor = {};
@@ -28,12 +28,12 @@ Editor.switchEditor = function(isMarkdown) {
 	// 富文本永远是2
 	if(!isMarkdown) {
 		$("#editor").show();
-		$("#mdEditor").css("z-index", 1).hide();
+		MarkdownEditor.hide();
 		
 		// 刚开始没有
 		$("#leanoteNav").show();
 	} else {
-		$("#mdEditor").css("z-index", 3).show();
+		MarkdownEditor.show();
 		
 		$("#leanoteNav").hide();
 	}

@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-30 14:16:24
- * @LastEditTime: 2021-06-30 17:23:31
+ * @LastEditTime: 2021-07-01 15:02:08
  * @FilePath: /leanote/public/js/app/fulltext-editor.js
  */
 
@@ -269,6 +269,8 @@ FullTextEditor.toggleReadOnly = function(){
 
     $('.info-toolbar').removeClass('invisible');
 
+	var note = Cache.getCurNote();
+
     $('#infoToolbar .created-time').html(goNowToDatetime(note.CreatedTime));
 	$('#infoToolbar .updated-time').html(goNowToDatetime(note.UpdatedTime));
 
@@ -279,7 +281,7 @@ FullTextEditor.toggleReadOnly = function(){
 }
 
 FullTextEditor.toggleWriteable = function(isFromNewNote) {
-    // $('#infoToolbar').hide();
+    $('#infoToolbar').hide();
 	$('#editor').removeClass('read-only');
 	$('#editorContent').attr('contenteditable', true);
 
