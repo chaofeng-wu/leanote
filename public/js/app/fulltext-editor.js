@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-30 14:16:24
- * @LastEditTime: 2021-07-01 15:02:08
+ * @LastEditTime: 2021-07-02 17:56:48
  * @FilePath: /leanote/public/js/app/fulltext-editor.js
  */
 
@@ -290,6 +290,21 @@ FullTextEditor.toggleWriteable = function(isFromNewNote) {
         LeaAce.setAceReadOnly($(this), false);
     });
     isFromNewNote || tinymce.activeEditor.focus();
+}
+
+FullTextEditor.showEditor = function() {
+	$("#editor").show();
+	// 刚开始没有
+	$("#leanoteNav").show();
+}
+
+FullTextEditor.hideEditor = function() {
+	$("#leanoteNav").hide();
+	$("#editor").hide();
+}
+
+FullTextEditor.insertAttachLink = function(src){
+    tinymce.activeEditor.insertContent(src);
 }
 
 FullTextEditor.initEditor();

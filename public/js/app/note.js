@@ -136,8 +136,7 @@ Note.renderNoteInfo = function(note) {
  */
 Note.renderNoteContent = function(content) {
 
-	Editor.setEditorContent(content.Content, content.IsMarkdown, content.Preview, function() {
-		Cache.setCurNoteId(content.NoteId);
+	Editor.setEditorContent(content.Content, content.IsMarkdown, function() {
 		Editor.toggleReadOnly();
 	});
 

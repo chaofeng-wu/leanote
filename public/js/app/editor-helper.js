@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-27 17:47:48
- * @LastEditTime: 2021-07-01 14:29:58
+ * @LastEditTime: 2021-07-02 17:57:07
  * @FilePath: /leanote/public/js/app/editor-helper.js
  */
 Editor = {};
@@ -21,32 +21,27 @@ Editor.getEditorContent = function(isMarkdown) {
 
 //切换编辑器
 Editor.switchEditor = function(isMarkdown) {
-	//清理一下Markdown Editor里面的内容
-	MarkdownEditor.setEditorContent("");
+	// //清理一下Markdown Editor里面的内容
+	// MarkdownEditor.setEditorContent();
 	
 	LEA.isM = isMarkdown;
 	// 富文本永远是2
 	if(!isMarkdown) {
-		$("#editor").show();
-		MarkdownEditor.hide();
+		FullTextEditor.showEditor();
+		MarkdownEditor.hideEditor();
 		
-		// 刚开始没有
-		$("#leanoteNav").show();
 	} else {
-		MarkdownEditor.show();
+		MarkdownEditor.showEditor();
+		FullTextEditor.hideEditor();
 		
-		$("#leanoteNav").hide();
 	}
 }
 
 // editor 设置内容
 // 可能是tinymce还没有渲染成功
-Editor.setEditorContent = function(content, isMarkdown, preview, callback) {
+Editor.setEditorContent = function(content, isMarkdown, callback) {
 	if(!content) {
 		content = "";
-	}
-	if(clearIntervalForSetContent) {
-		clearInterval(clearIntervalForSetContent);
 	}
 	if(!isMarkdown) {
 		FullTextEditor.setEditorContent(content,callback);
@@ -122,7 +117,7 @@ Editor.isNoteChanged = function(force, isRefreshOrCtrls) {
 	// 是否需要检查内容呢?
 
 	var needCheckContent = false;
-	if (curNote.IsNew || force || !Note.readOnly) {
+	if (curNote.IsNew || force || !LEA.readOnly) {
 		needCheckContent = true;
 	}
 
@@ -156,6 +151,9 @@ Editor.isNoteChanged = function(force, isRefreshOrCtrls) {
 		
 		// 从html中得到...
 		var c = content;
+		if (curNote.IsMarkdown) {
+			c = MarkdownEditor.getPreviewedHTML();
+		}
 		
 		// 不是博客或没有自定义设置的
 		if(!tmpNote.HasSelfDefined || !tmpNote.IsBlog) {
@@ -186,7 +184,7 @@ Editor.getCurEditorContent = function(){
 Editor.saveNoteChange = function(force, callback, isRefreshOrCtrls) {
 	// 如果当前没有笔记, 不保存
 	// 或者是共享的只读笔记
-	if(!Cache.curNoteId || Note.isReadOnly) {
+	if(!Cache.curNoteId || LEA.readOnly) {
 		// log(!Note.curNoteId ? '无当前笔记' : '共享只读');
 		return;
 	}
@@ -305,5 +303,16 @@ Editor.toggleWriteableAndReadOnly = function(){
 	}
 	else {
 		Editor.toggleReadOnly(true);
+	}
+}
+
+Editor.insertAttachLink = function(link,title){
+	if (LEA.readOnly) {
+		return;
+	}
+	if (LEA.isM) {
+		MarkdownEditor.insertAttachLink(link,title);
+	}else{
+		FullTextEditor.insertAttachLink(link);
 	}
 }

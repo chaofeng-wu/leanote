@@ -38,6 +38,7 @@
     "jspanel4x": "Flyer53/jsPanel4#^4.11.4",
     "tinymce": "^5.8.0",
     "editor.md": "^1.5.0",
-    "Font-Awesome": "^5.15.3"
+    "Font-Awesome": "^5.15.3",
+    "jQuery-File-Upload": "^10.31.0"
   }
 }

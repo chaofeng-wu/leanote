@@ -537,8 +537,18 @@ function log(o) {
 					</div>
 					
 
-					<div id="test-editor">
-						<textarea style="display:none;"></textarea>
+					<div id="markdownEditor" style="width: 100%; height:100%">
+						<div id="mceToolbar">
+							<!-- 查看信息 -->
+							<div id="mdInfoToolbar" class="info-toolbar invisible">
+				              
+				              <span class="lang">{{msg . "created"}}</span>: <span class="created-time"></span>
+				              <span class="lang">{{msg . "updated"}}</span>: <span class="updated-time"></span>
+				            </div>
+						</div>
+						<div id="editorMD"></div>
+							<textarea style="display:none;"></textarea>
+						</div>
 					</div>
 				</div>	
 			</div>
@@ -726,6 +736,11 @@ var GlobalConfigs = {{.globalConfigs|jsonJs}};
 <script src="/js/libs/jspanel4x/dist/extensions/dock/jspanel.dock.min.js"></script>
 <script src="/js/libs/jspanel4x/dist/extensions/contextmenu/jspanel.contextmenu.min.js"></script>
 <!-- /dev -->
+
+
+<script src="/js/libs/jQuery-File-Upload/js/vendor/jquery.ui.widget.js"></script>
+<script src="/js/libs/jQuery-File-Upload/js/jquery.iframe-transport.js"></script>
+<script src="/js/libs/jQuery-File-Upload/js/jquery.fileupload.js"></script>
 
 <script src="/js/libs-modified/tinymce/tinymce.js"></script>
 

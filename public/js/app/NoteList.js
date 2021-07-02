@@ -554,6 +554,7 @@ NoteList.changeNote = function(selectNoteId, callback) {
 	
 	// 3 设空, 防止在内容得到之前又发生保存
 	Cache.clearCurNoteId();
+	Cache.setCurNoteId(selectNoteId);
 	
 	// 4 获取选中的note
 	var target = NoteList.getTargetById(selectNoteId);
@@ -1148,7 +1149,7 @@ NoteList.renderChangedNote = function(note) {
 	if(note.Title) {
 		$leftNoteNav.find(".item-title").html(trimTitle(note.Title));
 	}
-	if(note.Desc) {
+	if(note.Desc != undefined) {
 		$leftNoteNav.find(".desc").html(trimTitle(note.Desc));
 	}
 	if(note.ImgSrc) {
