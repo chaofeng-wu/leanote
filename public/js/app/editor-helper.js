@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-27 17:47:48
- * @LastEditTime: 2021-07-02 17:57:07
+ * @LastEditTime: 2021-07-02 21:54:36
  * @FilePath: /leanote/public/js/app/editor-helper.js
  */
 Editor = {};
@@ -184,7 +184,7 @@ Editor.getCurEditorContent = function(){
 Editor.saveNoteChange = function(force, callback, isRefreshOrCtrls) {
 	// 如果当前没有笔记, 不保存
 	// 或者是共享的只读笔记
-	if(!Cache.curNoteId || LEA.readOnly) {
+	if(!Cache.curNoteId || (LEA.readOnly && !force && !isRefreshOrCtrls)) {
 		// log(!Note.curNoteId ? '无当前笔记' : '共享只读');
 		return;
 	}

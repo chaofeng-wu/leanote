@@ -470,9 +470,9 @@ function log(o) {
 								<li><a class="ios7-a " id="contentHistory"
 									data-toggle="dropdown" title="{{msg . "history"}}">
 									<span class="fa fa-history"></span></a></li>
-								<li><a class="ios7-a " id="tipsBtn"
+								<!-- <li><a class="ios7-a " id="tipsBtn"
 									data-toggle="dropdown" title="{{msg . "editorTips"}}">
-									<span class="fa fa-question"></span></a></li>
+									<span class="fa fa-question"></span></a></li> -->
 							</ul>
 						</div>
 
@@ -753,6 +753,11 @@ var GlobalConfigs = {{.globalConfigs|jsonJs}};
 <script src="/js/libs/editor.md/editormd.js"></script>
 <script src="/js/app/markdown-editor.js"></script>
 <script src="/js/app/fulltext-editor.js"></script>
+
+<script src="/js/app/history.js"></script>
+
+<script src="/js/app/note-info.js"></script>
+
 <!-- dev -->
 <script src="/js/libs-modified/jQuery-slimScroll/jquery.slimscroll.js"></script>
 <script src="/js/libs-modified/contextmenu/jquery.contextmenu.js"></script>
