@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-30 10:44:24
- * @LastEditTime: 2021-07-02 17:51:41
+ * @LastEditTime: 2021-07-03 21:11:34
  * @FilePath: /leanote/public/js/app/markdown-editor.js
  */
 
@@ -48,7 +48,7 @@ var MarkdownEditor = editormd("editorMD", {
     dialogMaskOpacity    : 0.1,
     fontSize             : "13px",
     saveHTMLToTextarea   : false,          // If enable, Editor will create a <textarea name="{editor-id}-html-code"> tag save HTML code for form post to server-side.
-    disabledKeyMaps      : [],
+    disabledKeyMaps      : ["Ctrl-V", "Win-A","Cmd-A"],
     
     onload               : function() { 
         this.setMarkdown(this.markdown);
@@ -57,6 +57,12 @@ var MarkdownEditor = editormd("editorMD", {
         MarkdownEditor.loaded = true;
         MarkdownEditor.resize();
         $(".editormd-preview").css({ "top": "0px"});
+        $("#editorMD").keydown(function(e){
+            // if ( e.keyCode === 86) {
+            //     return false;
+            // }
+        });
+        
     },
     onresize             : function() {},
     onchange             : function() {},
@@ -221,4 +227,22 @@ MarkdownEditor.insertAttachLink = function(link, title){
         return;
     }
     MarkdownEditor.cm.replaceSelection("[" + title + "]("+link+")");
+}
+
+MarkdownEditor.insertImage = function(link, title){
+    if (MarkdownEditor.isPreviewing) {
+        return;
+    }
+    var picture=/(.jpg|.jpeg|.gif|.png|.bmp|.webp)$/;
+    var cursor = MarkdownEditor.getCursor();
+    var titleLength = title.length;
+    var beginCursor = {line:cursor.line,ch:cursor.ch-titleLength};
+    MarkdownEditor.setSelection(beginCursor,cursor);
+    
+    if (title.search(picture) > 0) {
+        MarkdownEditor.replaceSelection("\n![" + title + "]("+link+")");
+        
+    }else{
+        MarkdownEditor.replaceSelection("\n[" + title + "]("+link+")");
+    }
 }
