@@ -19,6 +19,14 @@ var MarkdownEditor;
 var ScrollLink;
 var MD;
 
+function showLoading() {
+	$("#loading").css("visibility", "visible");
+}
+
+function hideLoading() {
+	$("#loading").css("visibility", "hidden");
+}
+
 //---------------------
 // 公用方法
 

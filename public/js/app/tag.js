@@ -1,7 +1,7 @@
 // Tag
 
 // 蓝色, 红色怎么存到数据库中? 直接存蓝色
-
+Tag = {};
 Tag.classes = {
 	"蓝色": "label label-blue",
 	"红色": "label label-red",
@@ -175,7 +175,7 @@ Tag.appendTag = function(tag, save) {
 		// 如果之前不存, 则添加之
 		if(!isExists) {
 			Editor.saveNoteChange(true, function() {
-				ajaxPost("/tag/updateTag", {tag: rawText}, function(ret) {
+				Net.ajaxPost("/tag/updateTag", {tag: rawText}, function(ret) {
 					if(reIsOk(ret)) {
 						Tag.addTagNav(ret.Item);
 					}
@@ -338,7 +338,7 @@ $(function() {
 		$li = $(this).closest('li');
 		var tag = $.trim($li.data("tag"));
 		if(confirm("Are you sure ?")) {
-			ajaxPost("/tag/deleteTag", {tag: tag}, function(re) {
+			Net.ajaxPost("/tag/deleteTag", {tag: tag}, function(re) {
 				if(reIsOk(re)) {
 					var item = re.Item; // 被删除的
 					Note.deleteNoteTag(item, tag);
@@ -356,7 +356,7 @@ $(function() {
 	function searchTag() {
 		var $li = $(this).closest('li');
 		var tag = $.trim($li.data("tag"));
-		// tag = Tag.mapCn2En[tag] || tag;
+		tag = Tag.mapCn2En[tag] || tag;
 		
 		// 学习changeNotebook
 		
@@ -365,23 +365,23 @@ $(function() {
 		
 		// 2 先清空所有
 		// 也会把curNoteId清空
-		Note.clearAll();
+		NoteList.clearAll();
 		
 		$("#tagSearch").html($li.html()).show();
 		$("#tagSearch .tag-delete").remove();
-		Note.listIsIn(true, false);
+		Note.listIsInTagOrSearch(true, false);
 		
 		showLoading();
-		ajaxGet("/note/searchNoteByTags", {tags: [tag]}, function(notes) {
+		Net.ajaxGet("/note/searchNoteByTags", {tags: [tag]}, function(notes) {
 			hideLoading();
 			if(notes) {
 				// 和note搜索一样
 				// 设空, 防止发生上述情况
 				// Note.curNoteId = "";
 
-				Note.renderNotes(notes);
+				NoteList.renderNotes(notes);
 				if(!isEmpty(notes)) {
-					Note.changeNote(notes[0].NoteId);
+					NoteList.changeNote(notes[0].NoteId);
 				}
 			}
 		});
