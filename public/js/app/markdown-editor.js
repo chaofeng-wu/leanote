@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-30 10:44:24
- * @LastEditTime: 2021-07-03 21:11:34
+ * @LastEditTime: 2021-07-03 21:39:30
  * @FilePath: /leanote/public/js/app/markdown-editor.js
  */
 
@@ -85,7 +85,7 @@ var MarkdownEditor = editormd("editorMD", {
     uploadCallbackURL    : "",             // Cross-domain upload callback url
 
     toc                  : true,           // Table of contents
-    tocm                 : false,          // Using [TOCM], auto create ToC dropdown menu
+    tocm                 : true,          // Using [TOCM], auto create ToC dropdown menu
     tocTitle             : "",             // for ToC dropdown menu button
     tocDropdown          : true,          // Enable/disable Table Of Contents dropdown menu
     tocContainer         : "",             // Custom Table Of Contents Container Selector
@@ -94,8 +94,8 @@ var MarkdownEditor = editormd("editorMD", {
     pageBreak            : true,           // Enable parse page break [========]
     atLink               : true,           // for @link
     emailLink            : true,           // for email address auto link
-    taskList             : false,          // Enable Github Flavored Markdown task lists
-    emoji                : false,          // :emoji: , Support Github emoji, Twitter Emoji (Twemoji);
+    taskList             : true,          // Enable Github Flavored Markdown task lists
+    emoji                : true,          // :emoji: , Support Github emoji, Twitter Emoji (Twemoji);
                                            // Support FontAwesome icon emoji :fa-xxx: > Using fontAwesome icon web fonts;
                                            // Support Editor.md logo icon emoji :editormd-logo: :editormd-logo-1x: > 1~8x;
     tex                  : true,          // TeX(LaTeX), based on KaTeX
@@ -105,11 +105,14 @@ var MarkdownEditor = editormd("editorMD", {
 
     toolbar              : true,           // show or hide toolbar
     toolbarAutoFixed     : false,           // on window scroll auto fixed position
-    toolbarIcons : function() {
-        // Or return editormd.toolbarModes[name]; // full, simple, mini
-        // Using "||" set icons align right.
-        return ["undo", "redo", "|", "bold", "hr", "|", "preview", "watch", "|", "fullscreen", "mindmap"]
-    },
+    toolbarIcons         : ["undo", "redo", "|", 
+                            "mindmap","|",
+                            "bold", "del", "italic", "quote", "ucwords", "uppercase", "lowercase", "|", 
+                            "h1", "h2", "h3", "h4", "h5", "h6", "|", 
+                            "list-ul", "list-ol", "hr", "|",
+                            "link", "reference-link", "image", "code", "preformatted-text", "code-block", "table", "datetime", "emoji", "html-entities", "pagebreak", "|",
+                            "goto-line", "watch", "preview", "clear", "search", "|",
+                            "help"],
     toolbarIconsClass : {
         mindmap : "fa-lightbulb"  // 指定一个FontAawsome的图标类
     },
