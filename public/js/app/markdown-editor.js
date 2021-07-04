@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-30 10:44:24
- * @LastEditTime: 2021-07-03 21:39:30
+ * @LastEditTime: 2021-07-04 12:16:05
  * @FilePath: /leanote/public/js/app/markdown-editor.js
  */
 
@@ -147,7 +147,8 @@ var MarkdownEditor = editormd("editorMD", {
 
             // // this == 当前editormd实例
             // console.log("testIcon =>", this, cm, icon, cursor, selection);
-            Mindmap.convertMarkdowmToMindmap();
+            // Mindmap.convertMarkdowmToMindmap();
+            Dialog.showImageUploadDialog();
 
             
         }
@@ -232,20 +233,26 @@ MarkdownEditor.insertAttachLink = function(link, title){
     MarkdownEditor.cm.replaceSelection("[" + title + "]("+link+")");
 }
 
-MarkdownEditor.insertImage = function(link, title){
+MarkdownEditor.insertImage = function(link, title, isUploaded){
     if (MarkdownEditor.isPreviewing) {
         return;
     }
+    if (title === "") {
+        title = "title";
+    }
+    if (isUploaded) {
+        MarkdownEditor.insertValue("![" + title + "]("+link+")");
+        return;
+    }
+
     var picture=/(.jpg|.jpeg|.gif|.png|.bmp|.webp)$/;
     var cursor = MarkdownEditor.getCursor();
     var titleLength = title.length;
     var beginCursor = {line:cursor.line,ch:cursor.ch-titleLength};
     MarkdownEditor.setSelection(beginCursor,cursor);
-    
     if (title.search(picture) > 0) {
-        MarkdownEditor.replaceSelection("\n![" + title + "]("+link+")");
-        
+        MarkdownEditor.replaceSelection("![" + title + "]("+link+")");
     }else{
-        MarkdownEditor.replaceSelection("\n[" + title + "]("+link+")");
+        MarkdownEditor.replaceSelection("[" + title + "]("+link+")");
     }
 }

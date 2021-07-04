@@ -280,7 +280,7 @@ var o = {
 				html += '<li ' + classes + '>';
 				html += '<a title="" href="javascript:;" class="a-img"><img  alt="" src="' + src + '" data-original="' + src + '" ></a>';
 				// html += '<div class="tools"><a href="javascript:;" class="del" data-id="' + each.FileId + '"><span class="fa fa-trash"></span></a></div>';
-				html += '<div class="tools clearfix" data-id="' + each.FileId + '"><div class="file-title pull-left">' + each.Title + '</div><div class="pull-right"><a href="javascript:;" class="del" data-id="' + each.FileId + '"><span class="fa fa-trash"></span></a></div></div>';
+				html += '<div class="tools clearfix" data-id="' + each.FileId + '"><div class="file-title pull-left">' + each.Title + '</div><div class="pull-right"><a href="javascript:;" class="del" data-id="' + each.FileId + '"><span class="fas fa-trash"></span></a></div></div>';
 				html += "</li>";
 			}
 				
@@ -327,7 +327,7 @@ var o = {
 					if(data.title) attrs += ' data-title="' + data.title + '"';
 				}
 
-				target.html('<img ' + attrs + ' src="' + src + '" width="60"/><div class="tools"><a title="' + getMsg('click to remove this image') + '" href="javascript:;" class="del"><span class="fa fa-trash"></span></a></div>');
+				target.html('<img ' + attrs + ' src="' + src + '" width="60"/><div class="tools"><a title="' + getMsg('click to remove this image') + '" href="javascript:;" class="del"><span class="fas fa-trash"></span></a></div>');
 			}
 
 			// remove selected
