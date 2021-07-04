@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-30 10:44:24
- * @LastEditTime: 2021-07-04 12:16:05
+ * @LastEditTime: 2021-07-04 19:39:03
  * @FilePath: /leanote/public/js/app/markdown-editor.js
  */
 
@@ -110,11 +110,12 @@ var MarkdownEditor = editormd("editorMD", {
                             "bold", "del", "italic", "quote", "ucwords", "uppercase", "lowercase", "|", 
                             "h1", "h2", "h3", "h4", "h5", "h6", "|", 
                             "list-ul", "list-ol", "hr", "|",
-                            "link", "reference-link", "image", "code", "preformatted-text", "code-block", "table", "datetime", "emoji", "html-entities", "pagebreak", "|",
+                            "link", "reference-link", "picture", "code", "preformatted-text", "code-block", "table", "datetime", "emoji", "html-entities", "pagebreak", "|",
                             "goto-line", "watch", "preview", "clear", "search", "|",
                             "help"],
     toolbarIconsClass : {
-        mindmap : "fa-lightbulb"  // 指定一个FontAawsome的图标类
+        mindmap : "fa-lightbulb",  // 指定一个FontAawsome的图标类
+        picture : "fa-image"
     },
     toolbarIconTexts : {},
 
@@ -147,10 +148,11 @@ var MarkdownEditor = editormd("editorMD", {
 
             // // this == 当前editormd实例
             // console.log("testIcon =>", this, cm, icon, cursor, selection);
-            // Mindmap.convertMarkdowmToMindmap();
-            Dialog.showImageUploadDialog();
+            Mindmap.convertMarkdowmToMindmap();
 
-            
+        },
+        picture : function(cm, icon, cursor, selection) {
+            Dialog.showImageUploadDialog();
         }
     },
 

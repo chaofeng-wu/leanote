@@ -107,9 +107,10 @@ Mindmap.protocol = {
     
     decode : function (markdown) {
     
-        var json, parentMap = {}, lines, line, lineInfo, level, node, parent, noteProgress, imageProgress, codeBlock;
+        var parentMap = {}, lines, line, lineInfo, level, node, parent, noteProgress, imageProgress, codeBlock;
     
         var imageUrl = "";
+        var previousNodeLine = "";
         // 一级标题转换 `{title}\n===` => `# {title}`
         markdown = markdown.replace(/^(.+)\n={3,}/, function($0, $1) {
             return '# ' + $1;
@@ -122,12 +123,13 @@ Mindmap.protocol = {
             line = lines[i];
     
             lineInfo = Mindmap.protocol._resolveLine(line);
-    
+            
+            //处理* 或者- 开头的行
             if ("* " === lineInfo.prefix || "- " === lineInfo.prefix) {
                 if (0 === i){
                     lineInfo.level = 1;
                 } else {
-                    var previousLineMatch = /^([\t ]*)(\*|\-)\s+(.*)$/.exec(previousNodeLine);
+                    var previousLineMatch = /^([\t ]*)(\* |\- )\s+(.*)$/.exec(previousNodeLine);//上次匹配到的行
                     if (!previousLineMatch) {
                         lineInfo.level = level + 1;
                     }else{
@@ -238,7 +240,7 @@ Mindmap.protocol = {
                 content: match[2],
             };
         } else {
-            var match = /^([\t ]*(\*|\-))\s+(.*)$/.exec(line);
+            var match = /^([\t ]*(\* |\- ))\s+(.*)$/.exec(line);
             if (match){
                 return {
                     level: 0,
