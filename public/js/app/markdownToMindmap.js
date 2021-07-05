@@ -125,11 +125,16 @@ Mindmap.protocol = {
             lineInfo = Mindmap.protocol._resolveLine(line);
             
             //处理* 或者- 开头的行
-            if ("* " === lineInfo.prefix || "- " === lineInfo.prefix) {
+            var matchHeader = null;
+            if (lineInfo.prefix) {
+                matchHeader = /[\*\-]/.exec(lineInfo.prefix);
+            }
+            
+            if (matchHeader) {
                 if (0 === i){
                     lineInfo.level = 1;
                 } else {
-                    var previousLineMatch = /^([\t ]*)(\* |\- )\s+(.*)$/.exec(previousNodeLine);//上次匹配到的行
+                    var previousLineMatch = /^([\t ]*)(\*|\-)\s+(.*)$/.exec(previousNodeLine);//上次匹配到的行
                     if (!previousLineMatch) {
                         lineInfo.level = level + 1;
                     }else{
@@ -240,7 +245,7 @@ Mindmap.protocol = {
                 content: match[2],
             };
         } else {
-            var match = /^([\t ]*(\* |\- ))\s+(.*)$/.exec(line);
+            var match = /^([\t ]*(\*|\-))\s+(.*)$/.exec(line);
             if (match){
                 return {
                     level: 0,
