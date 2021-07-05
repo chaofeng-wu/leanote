@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-30 10:44:24
- * @LastEditTime: 2021-07-04 19:39:03
+ * @LastEditTime: 2021-07-05 14:46:15
  * @FilePath: /leanote/public/js/app/markdown-editor.js
  */
 
@@ -15,7 +15,7 @@ var MarkdownEditor = editormd("editorMD", {
     markdown             : "",             // Markdown source code
     appendMarkdown       : "",             // if in init textarea value not empty, append markdown to textarea
     width                : "100%",
-    height               : "91%",
+    height               : "93%",
     path                 : "/js/libs/editor.md/lib/",       // Dependents module file directory
     pluginPath           : "",             // If this empty, default use settings.path + "../plugins/"
     delay                : 300,            // Delay parse markdown to html, Uint : ms
@@ -57,11 +57,6 @@ var MarkdownEditor = editormd("editorMD", {
         MarkdownEditor.loaded = true;
         MarkdownEditor.resize();
         $(".editormd-preview").css({ "top": "0px"});
-        $("#editorMD").keydown(function(e){
-            // if ( e.keyCode === 86) {
-            //     return false;
-            // }
-        });
         
     },
     onresize             : function() {},
@@ -111,7 +106,7 @@ var MarkdownEditor = editormd("editorMD", {
                             "h1", "h2", "h3", "h4", "h5", "h6", "|", 
                             "list-ul", "list-ol", "hr", "|",
                             "link", "reference-link", "picture", "code", "preformatted-text", "code-block", "table", "datetime", "emoji", "html-entities", "pagebreak", "|",
-                            "goto-line", "watch", "preview", "clear", "search", "|",
+                            "goto-line", "watch", "clear", "search", "|",
                             "help"],
     toolbarIconsClass : {
         mindmap : "fa-lightbulb",  // 指定一个FontAawsome的图标类
@@ -197,6 +192,7 @@ MarkdownEditor.toggleWriteable = function(){
     LEA.readOnly = false;
     MarkdownEditor.isPreviewing = false;
     $('#infoToolbar').hide();
+    $('#mdToolbar').css({ "display": "none"});
 }
 MarkdownEditor.loaded = false;
 
@@ -212,6 +208,7 @@ MarkdownEditor.toggleMdReadOnly = function(){
     var note = Cache.getCurNote();
     $('.info-toolbar').removeClass('invisible');
     $('.info-toolbar').show();
+    $('#mdToolbar').css({ "display": "block"});
     $('#mdInfoToolbar .created-time').html(goNowToDatetime(note.CreatedTime));
 	$('#mdInfoToolbar .updated-time').html(goNowToDatetime(note.UpdatedTime));
     $(".editormd-preview-close-btn").remove();
@@ -257,4 +254,43 @@ MarkdownEditor.insertImage = function(link, title, isUploaded){
     }else{
         MarkdownEditor.replaceSelection("[" + title + "]("+link+")");
     }
+}
+
+MarkdownEditor.toggleWritingMode = function (){
+    if (MarkdownEditor.isPreviewing){
+        MarkdownEditor.previewing();
+        MarkdownEditor.isPreviewing = false;
+    }
+    // MarkdownEditor.resize();
+    if (MarkdownEditor.loaded) {
+        MarkdownEditor.resizeEditor();
+        MarkdownEditor.unwatch();
+    }
+    $('#mdToolbar').css({ "display": "block"});
+    $('#mdToolbar').css({ "height": "60px"});
+}
+
+MarkdownEditor.toggleNormalMode = function(){
+    // setTimeout(function() {
+	// 	Editor.resize();
+	// }, 500);
+    if (MarkdownEditor.isPreviewing){
+        MarkdownEditor.previewing();
+        MarkdownEditor.isPreviewing = false;
+    }
+    $('#mdToolbar').css({ "height": "30px"});
+    $('#mdToolbar').css({ "display": "none"});
+    MarkdownEditor.resizeEditor();
+}
+
+MarkdownEditor.resizeEditor = function(){
+    setTimeout(function() {
+        MarkdownEditor.resize();
+    }, 10);
+    setTimeout(function() {
+        MarkdownEditor.resize();
+    }, 30);
+    setTimeout(function() {
+        MarkdownEditor.resize();
+    }, 500);
 }

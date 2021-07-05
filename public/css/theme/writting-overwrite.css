@@ -3544,7 +3544,7 @@ body {
 }
 #note {
   position: absolute;
-  width: 700px;
+  width: 60%;
   margin: auto;
   height: 100%;
   left: 0;

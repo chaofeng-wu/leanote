@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-27 17:47:48
- * @LastEditTime: 2021-07-02 21:54:36
+ * @LastEditTime: 2021-07-05 14:44:05
  * @FilePath: /leanote/public/js/app/editor-helper.js
  */
 Editor = {};
@@ -48,31 +48,6 @@ Editor.setEditorContent = function(content, isMarkdown, callback) {
 	} else {
 		MarkdownEditor.setEditorContent(content,callback);
 	}
-}
-
-//-----------------------------------------
-Editor.resizeEditor = function(second) {
-	LEA.isM && MD && MD.resize && MD.resize();
-	return;
-	var ifrParent = $("#editorContent_ifr").parent();
-    ifrParent.css("overflow", "auto");
-    var height = $("#editorContent").height();
-    ifrParent.height(height);
-    // log(height + '---------------------------------------')
-    $("#editorContent_ifr").height(height);
-
-    // life 12.9
-    // inline editor
-    // $("#editorContent").css("top", $("#mceToolbar").height());
-    
-    /*
-    // 第一次时可能会被改变
-    if(!second) {
-		setTimeout(function() {
-			resizeEditorHeight(true);
-		}, 1000);
-    }
-    */
 }
 
 // 当前的note是否改变过了?
@@ -272,8 +247,11 @@ Editor.saveChangeInMindmap = function(markdown){
 
 Editor.toggleWriteable = function(isFromNewNote) {
 
-	FullTextEditor.toggleWriteable(isFromNewNote);
-	MarkdownEditor.toggleWriteable();
+	if (LEA.isM) {
+		MarkdownEditor.toggleWriteable();
+	}else{
+		FullTextEditor.toggleWriteable(isFromNewNote);
+	}
 	$('#note').removeClass('read-only-editor');
 
 	LEA.readOnly = false;
@@ -315,4 +293,18 @@ Editor.insertAttachLink = function(link,title){
 	}else{
 		FullTextEditor.insertAttachLink(link);
 	}
+}
+
+Editor.toggleWritingMode = function(){
+	MarkdownEditor.toggleWritingMode();
+}
+
+Editor.toggleNormalMode = function(){
+	if (LEA.isM) {
+		MarkdownEditor.toggleNormalMode();
+	}
+}
+
+Editor.resizeEditor = function(){
+	MarkdownEditor.resize();
 }

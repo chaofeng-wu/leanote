@@ -47,6 +47,7 @@ editorMode.prototype.init = function() {
 		
 		LEA.restoreBookmark();
 	});
+	Editor.toggleWritingMode();
 }
 // 改变模式
 editorMode.prototype.changeMode = function(isWritingMode) {
@@ -58,18 +59,6 @@ editorMode.prototype.changeMode = function(isWritingMode) {
 	}
 };
 
-editorMode.prototype.resizeEditor = function() {
-	// css还没渲染完
-	setTimeout(function() {
-		Editor.resizeEditor();
-	}, 10);
-	setTimeout(function() {
-		Editor.resizeEditor();
-	}, 20);
-	setTimeout(function() {
-		Editor.resizeEditor();
-	}, 500);
-}
 editorMode.prototype.normalMode = function() {
 	// 最开始的时候就调用?
 	/*
@@ -93,7 +82,7 @@ editorMode.prototype.normalMode = function() {
 	$("#note").css("left", UserInfo.NoteListWidth);
 
 	this.isWritingMode = false;
-	this.resizeEditor();
+	Editor.toggleNormalMode();
 };
 
 editorMode.prototype.writtingMode = function() {
@@ -123,13 +112,12 @@ editorMode.prototype.writtingMode = function() {
 	
 	//$("#pageInner").addClass("animated fadeInUp");
 
-	this.resizeEditor();
 	
 	$("#noteList").width(250);
 	$("#note").css("left", 0);
 	
 	// 切换到写模式
-	Note.toggleWriteable();
+	Editor.toggleWritingMode();
 
 	this.isWritingMode = true;
 };
