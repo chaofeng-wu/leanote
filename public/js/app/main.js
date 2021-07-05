@@ -1,7 +1,7 @@
 /*
  * @Author: Ethan Wu
  * @Date: 2021-06-26 15:00:01
- * @LastEditTime: 2021-07-05 14:44:14
+ * @LastEditTime: 2021-07-05 14:51:53
  * @FilePath: /leanote/public/js/app/main.js
  */
 
@@ -113,10 +113,12 @@ function initActionListeners() {
 	
 	$("#leftSwitcher2").on('click', function() {
 		maxLeft(true);
+		Editor.resizeEditor();
 	});
 	$("#leftSwitcher").click('click', function() {
 		if(Mobile.switchPage()) {
 			minLeft(true);
+			Editor.resizeEditor();
 		}
 	});
 	

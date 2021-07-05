@@ -47,7 +47,6 @@ editorMode.prototype.init = function() {
 		
 		LEA.restoreBookmark();
 	});
-	Editor.toggleWritingMode();
 }
 // 改变模式
 editorMode.prototype.changeMode = function(isWritingMode) {
