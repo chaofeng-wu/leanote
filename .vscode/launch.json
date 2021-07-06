@@ -11,8 +11,9 @@
             "host": "127.0.0.1",
             "env": {},
             "showLog": true,
-            "program": "${workspaceRoot}/app/tmp/",
-            "args": ["-importPath", "leanote", "-srcPath", "/Users/wuchaofeng/Desktop",  "-runMode", "prod"]
+            "preLaunchTask": "revel build", // 启动调试之前先调用 revel build 任务根据配置生成所需源代码
+            "program": "${workspaceRoot}/app/tmp/", // 在此指定 revel 生成的 main.go 所在目录
+            "args": ["-importPath", "leanote", "-srcPath", "${workspaceRoot}/..",  "-runMode", "dev"] // 启动 revel 程序的参数
         }
     ]
 }

@@ -26,3 +26,5 @@ target/
 package/leanote.tar.gz
 package/leanote/
 public/js/libs
+dev
+prod
